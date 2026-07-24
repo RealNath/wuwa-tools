@@ -1,0 +1,37 @@
+@import './base.css';
+
+#app {
+  margin: 0 auto;
+  padding: 2rem 10rem;
+  font-weight: normal;
+}
+
+a,
+.title {
+  text-decoration: none;
+  color: #a2bfee;
+  margin: 0;
+}
+
+ul {
+  padding-left: 0;
+}
+li {
+  margin-bottom: 1em;
+  background: #1e1e1e;
+  padding: 1em;
+  border-radius: 8px;
+  list-style: none;
+}
+
+@media (hover: hover) {
+  a:hover {
+    background-color: hsla(160, 100%, 37%, 0.2);
+  }
+}
+
+@media (max-width: 1024px) {
+  #app {
+    padding: 1.5rem;
+  }
+}

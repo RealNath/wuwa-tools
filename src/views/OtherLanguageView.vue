@@ -1,0 +1,68 @@
+<script setup lang="ts">
+import { onMounted, onUnmounted, ref } from 'vue'
+import DataWorker from '../workers/dataWorker?worker'
+
+const items = ref<any[]>([])
+const errorMessage = ref<string>('')
+const isLoading = ref(true)
+
+let worker: Worker | null = null
+
+onMounted(() => {
+  worker = new DataWorker()
+
+  worker.onmessage = (event) => {
+    const result = event.data
+
+    if (result.status === 'success') {
+      items.value = result.data
+    } else {
+      errorMessage.value = result.message
+    }
+
+    isLoading.value = false
+  }
+
+  worker.postMessage({
+    command: 'get_other_language',
+    input: 'Yangyang: Xuanling',
+    version: '3.5',
+  })
+})
+
+onUnmounted(() => {
+  if (worker) worker.terminate()
+})
+</script>
+
+<template>
+  <div class="other-language">
+    <h1>Other Language</h1>
+    <div v-if="isLoading">Loading data...</div>
+    <div v-else-if="errorMessage">Error: {{ errorMessage }}</div>
+    <ul v-else>
+      <li v-for="item in items" :key="item.id">
+        <details>
+          <summary>ID: {{ item.id }}</summary>
+          <pre>{{ item.wikiText }}</pre>
+        </details>
+      </li>
+    </ul>
+  </div>
+</template>
+
+<style>
+.other-language {
+  padding: 2rem;
+}
+ul {
+  padding-left: 0;
+}
+li {
+  margin-bottom: 1em;
+  background: #1e1e1e;
+  padding: 1em;
+  border-radius: 8px;
+  list-style: none;
+}
+</style>
