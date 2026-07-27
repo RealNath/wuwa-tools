@@ -17,7 +17,7 @@ function handleSearch() {
   worker?.postMessage({
     command: 'extract_dialogue',
     questId: Number(searchQuery.value),
-    version: '3.5',
+    version: "latest",
     lang: 'en',
   })
 }

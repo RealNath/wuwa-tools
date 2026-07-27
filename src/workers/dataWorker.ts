@@ -3,6 +3,11 @@ import { getActionsForStateKeys, getTalkFlowLines } from './dialogueExtractor'
 
 async function fetchData(type: string, version?: string, lang?: string) {
   let url: string
+  if (version === "latest") {
+    const response = await fetch('https://api.github.com/repos/Arikatsu/WutheringWaves_Data')
+    const data = await response.json()
+    version = data.default_branch
+  }
   if (type.toLowerCase() === 'multitext') {
     url = `https://raw.githubusercontent.com/Arikatsu/WutheringWaves_Data/refs/heads/${version}/Textmaps/${lang}/multi_text/MultiText.json`
   } else if (type.toLowerCase() === 'multitext_1sthalf') {
@@ -28,12 +33,12 @@ async function fetchData(type: string, version?: string, lang?: string) {
   }
 
   if (cachedData) {
-    console.log(`[Cache Hit] Loaded ${cacheKey} instantly!`)
+    console.log(`Loaded ${cacheKey} instantly!`)
     return cachedData
   }
 
   // if not, fetch it from GitHub
-  console.log(`[Cache Miss] Downloading ${cacheKey}...`)
+  console.log(`Downloading ${cacheKey}...`)
   const response = await fetch(url)
   const data = await response.text()
 
@@ -41,7 +46,7 @@ async function fetchData(type: string, version?: string, lang?: string) {
   try {
     await set(cacheKey, data)
   } catch (e) {
-    console.warn(`[Cache Warning] Could not save to IndexedDB:`, e)
+    console.warn(`Could not save to IndexedDB:`, e)
   }
 
   return data
@@ -199,16 +204,16 @@ self.onmessage = async (event) => {
       const parsedData = JSON.parse(questDataStr)
       const stateKeys: string[] = []
       const stateKeyTips: Record<string, string> = {}
-      let currentTip = ""
+      let currentTip = ''
 
       for (const item of parsedData) {
-        const tidTip = item.TidTip || ""
+        const tidTip = item.TidTip || ''
         if (tidTip) {
           currentTip = tidTip
         }
 
         const flow = item.Flow || {}
-        const flowListName = flow.FlowListName || ""
+        const flowListName = flow.FlowListName || ''
         const flowId = flow.FlowId || 0
         const stateId = flow.StateId || 0
 
@@ -232,7 +237,7 @@ self.onmessage = async (event) => {
       const multitextDict = await fetchMultiTextDict(version, lang)
 
       let firstPrint = true
-      let lastPrintedTip = ""
+      let lastPrintedTip = ''
       const finalOutput: string[] = []
 
       for (const stateKey of stateKeys) {
@@ -243,10 +248,10 @@ self.onmessage = async (event) => {
 
           if (lines && lines.length > 0) {
             if (!firstPrint) {
-              finalOutput.push("----")
+              finalOutput.push('----')
             }
 
-            const tipKey = stateKeyTips[stateKey] || ""
+            const tipKey = stateKeyTips[stateKey] || ''
             if (tipKey && tipKey !== lastPrintedTip) {
               const translatedTip = multitextDict[tipKey] || tipKey
               if (translatedTip.trim()) {
@@ -265,13 +270,12 @@ self.onmessage = async (event) => {
 
       self.postMessage({
         status: 'success',
-        data: finalOutput
+        data: finalOutput,
       })
-
     } catch (e) {
       self.postMessage({
         status: 'error',
-        message: String(e)
+        message: String(e),
       })
     }
   }

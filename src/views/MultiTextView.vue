@@ -26,7 +26,7 @@ onMounted(() => {
   worker.postMessage({
     command: 'fetch_data',
     dataType: 'multitext',
-    version: '3.5',
+    version: 'latest',
     lang: 'en',
     limit: 10
   })

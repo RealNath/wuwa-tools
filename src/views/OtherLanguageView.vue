@@ -17,7 +17,7 @@ function handleSearch() {
   worker?.postMessage({
     command: 'get_other_language',
     input: searchQuery.value,
-    version: '3.5',
+    version: "latest",
   })
 }
 
