@@ -3,11 +3,23 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import { Input } from '@/components/ui/input'
 import DataWorker from '../workers/dataWorker?worker'
 
+const searchQuery = ref<string>('')
+
 const items = ref<any[]>([])
 const errorMessage = ref<string>('')
-const isLoading = ref(true)
+const isLoading = ref(false)
 
 let worker: Worker | null = null
+
+function handleSearch() {
+  if (!searchQuery.value) return
+  isLoading.value = true
+  worker?.postMessage({
+    command: 'get_other_language',
+    input: searchQuery.value,
+    version: '3.5',
+  })
+}
 
 onMounted(() => {
   worker = new DataWorker()
@@ -23,12 +35,6 @@ onMounted(() => {
 
     isLoading.value = false
   }
-
-  worker.postMessage({
-    command: 'get_other_language',
-    input: 'Yangyang: Xuanling',
-    version: '3.5',
-  })
 })
 
 onUnmounted(() => {
@@ -38,8 +44,15 @@ onUnmounted(() => {
 
 <template>
   <div class="other-language">
-    <h1>Other Language</h1>
-    <Input type="email" placeholder="Email"></Input>
+    <h1 class="text-3xl font-bold">Other Language</h1>
+    <Input
+      id="other-language-search"
+      :disabled="isLoading"
+      v-model="searchQuery"
+      @keydown.enter="handleSearch"
+      type="text"
+      placeholder="Search for the exact full string here.">
+    </Input>
 
     <div v-if="isLoading">Loading data...</div>
     <div v-else-if="errorMessage">Error: {{ errorMessage }}</div>
@@ -57,6 +70,10 @@ onUnmounted(() => {
 <style>
 .other-language {
   padding: 2rem;
+}
+#other-language-search {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
 }
 ul {
   padding-left: 0;

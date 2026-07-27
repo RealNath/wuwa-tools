@@ -5,7 +5,7 @@ import DataWorker from '../workers/dataWorker?worker'
 const items = ref<any[]>([])
 const errorMessage = ref<string>('')
 const isLoading = ref(true)
-const lang = ref<String[]>(["de", "en", "es", "fr", "id", "ja", "ko", "pt", "ru", "th", "vi", "zh-Hans", "zh-Hant"])
+// const lang = ref<string[]>(["de", "en", "es", "fr", "id", "ja", "ko", "pt", "ru", "th", "vi", "zh-Hans", "zh-Hant"])
 let worker: Worker | null = null
 
 onMounted(() => {
