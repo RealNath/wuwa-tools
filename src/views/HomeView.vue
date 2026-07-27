@@ -47,7 +47,7 @@ async function disableCache() {
 
 <template>
   <main>
-    <p class="intro text-lg">
+    <div class="intro text-lg">
       Welcome to RealNath's Wuthering Waves Tools (because saccharose.wiki's data is outdated
       lol).<br />
       This is made especially to help Wuthering Waves Fandom Wiki editing.<br />
@@ -80,7 +80,7 @@ async function disableCache() {
       </div>
 
       Tools:
-    </p>
+    </div>
     <ul class="mt-2.5">
       <li><RouterLink to="/other-language">Other Languages</RouterLink></li>
       <li><RouterLink to="/dialogue-generator">Generate Dialogue</RouterLink></li>
