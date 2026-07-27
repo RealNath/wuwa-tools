@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
+import { Input } from '@/components/ui/input'
 import DataWorker from '../workers/dataWorker?worker'
 
 const items = ref<any[]>([])
@@ -38,6 +39,8 @@ onUnmounted(() => {
 <template>
   <div class="other-language">
     <h1>Other Language</h1>
+    <Input type="email" placeholder="Email"></Input>
+
     <div v-if="isLoading">Loading data...</div>
     <div v-else-if="errorMessage">Error: {{ errorMessage }}</div>
     <ul v-else>
