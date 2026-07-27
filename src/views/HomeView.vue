@@ -13,6 +13,7 @@
     </p>
     <ul style="margin-top: 10px;">
       <li><RouterLink to="/other-language">Other Languages</RouterLink></li>
+      <li><RouterLink to="/dialogue-generator">Generate Dialogue</RouterLink></li>
       <li><RouterLink to="/multi-text">Multi Text (Work in Progress)</RouterLink></li>
       <li>More to come!</li>
     </ul>
@@ -21,6 +22,6 @@
 
 <style scoped>
 .intro {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
 }
 </style>

@@ -12,6 +12,9 @@
   margin: 0 auto;
   padding: 2rem 10rem;
   font-weight: normal;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 a,
@@ -38,9 +41,15 @@ li {
   }
 }
 
+@media (max-width: 1280px) {
+  #app {
+    padding: 2rem 5rem;
+  }
+}
+
 @media (max-width: 1024px) {
   #app {
-    padding: 1.5rem;
+    padding: 2rem 1.5rem;
   }
 }
 

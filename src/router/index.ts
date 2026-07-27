@@ -20,6 +20,11 @@ const router = createRouter({
       component: () => import('../views/OtherLanguageView.vue')
     },
     {
+      path: '/dialogue-generator',
+      name: 'Generate Dialogue',
+      component: () => import('../views/GenerateDialogueView.vue')
+    },
+    {
       path: '/about',
       name: 'about',
       // route level code-splitting

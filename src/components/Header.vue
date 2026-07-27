@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import NavBar from './Navbar.vue'
+import NavBar from '@/components/Navbar.vue'
 
 defineProps<{
   msg: string
@@ -15,7 +15,6 @@ defineProps<{
     <!-- <h3>
       Because saccharose.wiki's data is out-of-date.
     </h3> -->
-    
   </header>
 </template>
 
@@ -45,10 +44,19 @@ h3 {
   padding-bottom: 1rem;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1280px) {
+  h1 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 900px) {
   .header {
     flex-direction: column;
     gap: 1rem;
+  }
+  h1 {
+    font-size: 1.5rem;
   }
 }
 </style>

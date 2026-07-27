@@ -1,9 +1,18 @@
 import { get, set } from 'idb-keyval'
+import { getActionsForStateKeys, getTalkFlowLines } from './dialogueExtractor'
 
 async function fetchData(type: string, version?: string, lang?: string) {
   let url: string
   if (type.toLowerCase() === 'multitext') {
     url = `https://raw.githubusercontent.com/Arikatsu/WutheringWaves_Data/refs/heads/${version}/Textmaps/${lang}/multi_text/MultiText.json`
+  } else if (type.toLowerCase() === 'multitext_1sthalf') {
+    url = `https://raw.githubusercontent.com/Arikatsu/WutheringWaves_Data/refs/heads/${version}/Textmaps/${lang}/multi_text_1sthalf/MultiText.json`
+  } else if (type.toLowerCase() === 'multitext_2ndhalf') {
+    url = `https://raw.githubusercontent.com/Arikatsu/WutheringWaves_Data/refs/heads/${version}/Textmaps/${lang}/multi_text_2ndhalf/MultiText.json`
+  } else if (type.toLowerCase() === 'flowstate') {
+    url = `https://raw.githubusercontent.com/Arikatsu/WutheringWaves_Data/refs/heads/${version}/BinData/flowState/flowstate.json`
+  } else if (type.toLowerCase() === 'plothandbook') {
+    url = `https://raw.githubusercontent.com/Arikatsu/WutheringWaves_Data/refs/heads/${version}/BinData/PlotHandBook/plothandbookconfig.json`
   } else {
     throw new Error(`Unsupported type: ${type}`)
   }
@@ -36,6 +45,29 @@ async function fetchData(type: string, version?: string, lang?: string) {
   }
 
   return data
+}
+
+async function fetchMultiTextDict(version: string, lang: string): Promise<Record<string, string>> {
+  const dict: Record<string, string> = {}
+  const files = ['multitext', 'multitext_1sthalf', 'multitext_2ndhalf']
+
+  for (const file of files) {
+    try {
+      const text = await fetchData(file, version, lang)
+      const data = JSON.parse(text)
+      for (const item of data) {
+        if (item.Id) {
+          if (file === 'multitext' && item.RedirectDbIndex === 1) {
+            continue
+          }
+          dict[item.Id] = item.Content
+        }
+      }
+    } catch (e) {
+      console.warn(`Could not load ${file}`, e)
+    }
+  }
+  return dict
 }
 
 self.onmessage = async (event) => {
@@ -143,6 +175,104 @@ self.onmessage = async (event) => {
           message: String(e),
         })
       }
+    }
+  } else if (command == 'extract_dialogue') {
+    const { questId, version, lang } = event.data
+
+    try {
+      // fetch PlotHandbook
+      const handbookText = await fetchData('plothandbook', version, lang)
+      const plothbData = JSON.parse(handbookText)
+
+      let questDataStr = null
+      for (const item of plothbData) {
+        if (item.QuestId === questId) {
+          questDataStr = item.Data
+          break
+        }
+      }
+
+      if (!questDataStr) {
+        throw new Error(`QuestId ${questId} not found in plothandbookconfig.json`)
+      }
+
+      const parsedData = JSON.parse(questDataStr)
+      const stateKeys: string[] = []
+      const stateKeyTips: Record<string, string> = {}
+      let currentTip = ""
+
+      for (const item of parsedData) {
+        const tidTip = item.TidTip || ""
+        if (tidTip) {
+          currentTip = tidTip
+        }
+
+        const flow = item.Flow || {}
+        const flowListName = flow.FlowListName || ""
+        const flowId = flow.FlowId || 0
+        const stateId = flow.StateId || 0
+
+        if (!flowListName) continue
+
+        const stateKey = `${flowListName}_${flowId}_${stateId}`
+        stateKeys.push(stateKey)
+        stateKeyTips[stateKey] = currentTip
+      }
+
+      if (stateKeys.length === 0) {
+        throw new Error(`No valid state keys found for QuestId ${questId}.`)
+      }
+
+      // fetch FlowState
+      const flowstateText = await fetchData('flowstate', version, lang)
+      const flowstateData = JSON.parse(flowstateText)
+      const actionsDict = getActionsForStateKeys(flowstateData, stateKeys)
+
+      // fetch Multitext Dict
+      const multitextDict = await fetchMultiTextDict(version, lang)
+
+      let firstPrint = true
+      let lastPrintedTip = ""
+      const finalOutput: string[] = []
+
+      for (const stateKey of stateKeys) {
+        const actionString = actionsDict[stateKey]
+        if (actionString) {
+          const parsedActions = JSON.parse(actionString)
+          const lines = getTalkFlowLines(parsedActions, multitextDict)
+
+          if (lines && lines.length > 0) {
+            if (!firstPrint) {
+              finalOutput.push("----")
+            }
+
+            const tipKey = stateKeyTips[stateKey] || ""
+            if (tipKey && tipKey !== lastPrintedTip) {
+              const translatedTip = multitextDict[tipKey] || tipKey
+              if (translatedTip.trim()) {
+                finalOutput.push(`;${translatedTip}`)
+              }
+              lastPrintedTip = tipKey
+            }
+
+            for (const line of lines) {
+              finalOutput.push(line)
+            }
+            firstPrint = false
+          }
+        }
+      }
+
+      self.postMessage({
+        status: 'success',
+        data: finalOutput
+      })
+
+    } catch (e) {
+      self.postMessage({
+        status: 'error',
+        message: String(e)
+      })
     }
   }
 }
