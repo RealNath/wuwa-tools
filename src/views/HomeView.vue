@@ -53,28 +53,21 @@ async function disableCache() {
       This is made especially to help Wuthering Waves Fandom Wiki editing.<br />
       This website is frontend only (I don't have budget for backend hosting, and it's not a serious
       project. I made it in free time).<br /><br />
-      The data will be downloaded and cached to your device. This shouldn't take long since the data is divided
-      into smaller chunks (files), the app knows which file to fetch.<br />
-      Make sure to enable Persistent Storage for better and longer data caching (<a
+      The data will be downloaded and cached to your device. This should take a few seconds for new
+      users, since the data is divided into smaller chunks (files). The app knows which file to
+      fetch.<br />
+      You can also enable Persistent Storage, just in case, for better and longer data caching (<a
         href="https://web.dev/articles/persistent-storage#chrome_and_other_chromium-based_browsers"
         target="_blank"
-      >some browsers need Notification</a> to prevent silent auto-deny).
+        >some browsers need Notification</a
+      >
+      to prevent silent auto-deny). But this is not needed anymore since I've optimized it.
 
       <div class="toggle-cache-btn">
-        <Button
-          v-if="!isCacheGranted"
-          variant="outline"
-          @click="enableCache"
-          class="cache-btn"
-        >
+        <Button v-if="!isCacheGranted" variant="outline" @click="enableCache" class="cache-btn">
           Enable Cache (Persistent Storage)
         </Button>
-        <Button
-          v-else
-          variant="outline"
-          @click="disableCache"
-          class="cache-btn"
-        >
+        <Button v-else variant="outline" @click="disableCache" class="cache-btn">
           Clear Cache
         </Button>
       </div>
