@@ -28,7 +28,7 @@ function getChunkId(id: string): string {
   for (let i = 0; i < id.length; i++) {
     hash = ((hash << 5) + hash) + id.charCodeAt(i)
   }
-  return Math.abs(hash % 32).toString(16).padStart(2, '0')
+  return Math.abs(hash % 64).toString(16).padStart(2, '0')
 }
 
 async function optimizeMultiText(version: string, outDir: string) {

@@ -53,8 +53,8 @@ async function disableCache() {
       This is made especially to help Wuthering Waves Fandom Wiki editing.<br />
       This website is frontend only (I don't have budget for backend hosting, and it's not a serious
       project. I made it in free time).<br /><br />
-      The data will be downloaded and cached to your device. This might take a minute or two for
-      first-time users.<br />
+      The data will be downloaded and cached to your device. This shouldn't take long since the data is divided
+      into smaller chunks (files), the app knows which file to fetch.<br />
       Make sure to enable Persistent Storage for better and longer data caching (<a
         href="https://web.dev/articles/persistent-storage#chrome_and_other_chromium-based_browsers"
         target="_blank"
