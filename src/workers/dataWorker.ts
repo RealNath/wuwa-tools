@@ -1,19 +1,24 @@
 import { getActionsForStateKeys, getTalkFlowLines } from './dialogueExtractor'
 
 async function fetchData(type: string, lang?: string, version: string = Date.now().toString()) {
+  const isProd = import.meta.env.PROD
+  const baseUrl = isProd
+    ? 'https://raw.githubusercontent.com/realnath/wuwa-tools/refs/heads/data'
+    : '/data'
+
   let url = ''
 
   if (type === 'multitext') {
-    url = `/data/multitext_${lang || 'en'}.json`
+    url = `${baseUrl}/multitext_${lang || 'en'}.json`
   } else if (type === 'flowstate') {
-    url = `/data/flowstate.json`
+    url = `${baseUrl}/flowstate.json`
   } else if (type === 'plothandbook') {
-    url = `/data/plothandbook.json`
+    url = `${baseUrl}/plothandbook.json`
   } else {
     throw new Error(`Unsupported type: ${type}`)
   }
 
-  const response = await fetch(`${url}?v=${version}`)
+  const response = await fetch(isProd ? url : `${url}?v=${version}`)
   if (!response.ok) {
     throw new Error(`Failed to load ${url}`)
   }
