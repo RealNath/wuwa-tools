@@ -23,7 +23,17 @@ async function ensureDir(dir: string) {
   }
 }
 
+function getChunkId(id: string): string {
+  let hash = 5381
+  for (let i = 0; i < id.length; i++) {
+    hash = ((hash << 5) + hash) + id.charCodeAt(i)
+  }
+  return Math.abs(hash % 32).toString(16).padStart(2, '0')
+}
+
 async function optimizeMultiText(version: string, outDir: string) {
+  const allDicts: Record<string, Record<string, string>> = {}
+
   await Promise.all(
     LANGUAGES.map(async (lang) => {
       const dict: Record<string, string> = {}
@@ -44,11 +54,46 @@ async function optimizeMultiText(version: string, outDir: string) {
         }
       }
 
+      allDicts[lang] = dict
       const outFile = path.join(outDir, `multitext_${lang}.json`)
       fs.writeFileSync(outFile, JSON.stringify(dict))
       console.log(`Saved ${outFile} (Keys: ${Object.keys(dict).length})`)
     })
   )
+
+  console.log('Generating chunked translation files...')
+  const chunkDir = path.join(outDir, 'chunks')
+  await ensureDir(chunkDir)
+
+  const allIds = new Set<string>()
+  for (const lang of LANGUAGES) {
+    for (const id of Object.keys(allDicts[lang])) {
+      allIds.add(id)
+    }
+  }
+
+  const chunksData: Record<string, Record<string, Record<string, string>>> = {}
+  
+  for (const id of allIds) {
+    const chunkId = getChunkId(id)
+    if (!chunksData[chunkId]) {
+      chunksData[chunkId] = {}
+    }
+    
+    const translationGroup: Record<string, string> = {}
+    for (const lang of LANGUAGES) {
+      if (allDicts[lang][id] !== undefined) {
+        translationGroup[lang] = allDicts[lang][id]
+      }
+    }
+    chunksData[chunkId][id] = translationGroup
+  }
+
+  for (const [chunkId, data] of Object.entries(chunksData)) {
+    const chunkFile = path.join(chunkDir, `chunk_${chunkId}.json`)
+    fs.writeFileSync(chunkFile, JSON.stringify(data))
+  }
+  console.log(`Saved ${Object.keys(chunksData).length} chunk files to chunks/`)
 }
 
 async function optimizeFlowState(version: string, outDir: string) {

@@ -29,7 +29,7 @@ async function fetchData(type: string, lang?: string, version: string = Date.now
   return await response.json()
 }
 
-// In-Memory cache for the MultiText dictionary so it's only parsed once per session!
+// In-Memory cache for the MultiText dictionary so it's only parsed once per session
 const memoryCache: Record<string, Record<string, string>> = {}
 
 async function fetchMultiTextDict(lang: string): Promise<Record<string, string>> {
@@ -52,7 +52,6 @@ async function fetchMultiTextDict(lang: string): Promise<Record<string, string>>
   }
 
   try {
-    // The optimized file is ALREADY a flat dictionary! No looping required.
     const dict = await fetchData('multitext', lang)
     memoryCache[lang] = dict
 
@@ -66,6 +65,50 @@ async function fetchMultiTextDict(lang: string): Promise<Record<string, string>>
     return dict
   } catch (e) {
     console.warn(`Could not load multitext for ${lang}`, e)
+    return {}
+  }
+}
+
+function getChunkId(id: string): string {
+  let hash = 5381
+  for (let i = 0; i < id.length; i++) {
+    hash = ((hash << 5) + hash) + id.charCodeAt(i)
+  }
+  return Math.abs(hash % 32).toString(16).padStart(2, '0')
+}
+
+const chunkCache: Record<string, any> = {}
+async function getChunkData(chunkId: string) {
+  if (chunkCache[chunkId]) return chunkCache[chunkId]
+
+  const cacheKey = `chunk-${chunkId}`
+  try {
+    const cached = await get(cacheKey)
+    if (cached) {
+      chunkCache[chunkId] = cached
+      return cached
+    }
+  } catch (e) {
+    console.log(e)
+  }
+
+  try {
+    const isLocal = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1'
+    const baseUrl = !isLocal
+      ? 'https://raw.githubusercontent.com/realnath/wuwa-tools/refs/heads/data'
+      : '/data'
+    const url = `${baseUrl}/chunks/chunk_${chunkId}.json`
+    const response = await fetch(!isLocal ? url : `${url}?v=${Date.now()}`)
+    if (!response.ok) throw new Error(`Failed to load chunk ${chunkId}`)
+    const data = await response.json()
+
+    chunkCache[chunkId] = data
+    try { await set(cacheKey, data) } catch (e) {
+      console.log(e)
+    }
+    return data
+  } catch (e) {
+    console.warn(e)
     return {}
   }
 }
@@ -103,18 +146,6 @@ self.onmessage = async (event) => {
     }
   } else if (command == 'get_other_language') {
     const { input } = event.data
-    const languages: string[] = [
-      'de',
-      'en',
-      'es',
-      'fr',
-      'ja',
-      'ko',
-      'pt',
-      'th',
-      'zh-Hans',
-      'zh-Hant',
-    ]
     try {
       const multiText = await fetchMultiTextDict('en')
 
@@ -126,28 +157,34 @@ self.onmessage = async (event) => {
       }
       console.log(`Found ${ids.length} matching IDs`)
 
-      const wikiTexts = []
+      const chunkIds = new Set<string>()
+      for (const id of ids) {
+        chunkIds.add(getChunkId(id))
+      }
 
-      const allDicts: Record<string, Record<string, string>> = {}
+      const chunkData: Record<string, any> = {}
       await Promise.all(
-        languages.map(async (lang) => {
-          console.log(`Downloading ${lang} data`)
-          allDicts[lang] = await fetchMultiTextDict(lang)
-        }),
+        Array.from(chunkIds).map(async (chunkId) => {
+          chunkData[chunkId] = await getChunkData(chunkId)
+        })
       )
 
+      const wikiTexts = []
       for (const id of ids) {
+        const chunkId = getChunkId(id)
+        const itemData = chunkData[chunkId]?.[id] || {}
+
         const dict = {
-          en: multiText[id] || '',
-          'zh-Hans': allDicts['zh-Hans']?.[id] || '',
-          'zh-Hant': allDicts['zh-Hant']?.[id] || '',
-          ja: allDicts['ja']?.[id] || '',
-          ko: allDicts['ko']?.[id] || '',
-          fr: allDicts['fr']?.[id] || '',
-          de: allDicts['de']?.[id] || '',
-          es: allDicts['es']?.[id] || '',
-          th: allDicts['th']?.[id] || '',
-          pt: allDicts['pt']?.[id] || '',
+          en: itemData['en'] || multiText[id] || '',
+          'zh-Hans': itemData['zh-Hans'] || '',
+          'zh-Hant': itemData['zh-Hant'] || '',
+          ja: itemData['ja'] || '',
+          ko: itemData['ko'] || '',
+          fr: itemData['fr'] || '',
+          de: itemData['de'] || '',
+          es: itemData['es'] || '',
+          th: itemData['th'] || '',
+          pt: itemData['pt'] || '',
         }
 
         wikiTexts.push({
