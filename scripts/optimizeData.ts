@@ -108,6 +108,7 @@ async function main() {
 
   const outDir = path.join(process.cwd(), 'public', 'data')
   await ensureDir(outDir)
+  fs.writeFileSync(path.join(outDir, '.gitignore'), '!*\n')
 
   await optimizePlotHandbook(version, outDir)
   await optimizeFlowState(version, outDir)
