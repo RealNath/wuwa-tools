@@ -94,7 +94,7 @@ onUnmounted(() => {
 <template>
   <div class="other-language">
     <h1 class="text-3xl font-bold">Other Language</h1>
-    <div class="flex items-center gap-2">
+    <div>
       <Input
         id="other-language-search"
         :disabled="isLoading"
@@ -104,14 +104,14 @@ onUnmounted(() => {
         placeholder="Search for the exact full string here."
       >
       </Input>
-      <DropdownMenu>
-        <!--  -->
+      <!-- <DropdownMenu>
+
         <DropdownMenuTrigger as-child>
           <Button variant="outline">{{ position }}</Button>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent>
-          <!--  -->
+
           <DropdownMenuGroup>
             <DropdownMenuLabel>Select a Language (WIP)</DropdownMenuLabel>
 
@@ -121,10 +121,10 @@ onUnmounted(() => {
               </DropdownMenuRadioItem>
             </DropdownMenuRadioGroup>
           </DropdownMenuGroup>
-          <!--  -->
+
         </DropdownMenuContent>
-        <!--  -->
-      </DropdownMenu>
+
+      </DropdownMenu> -->
     </div>
 
     <div v-if="isLoading">Loading data...</div>
