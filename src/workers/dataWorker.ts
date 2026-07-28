@@ -2,26 +2,6 @@ import { get, set } from 'idb-keyval'
 import { getActionsForStateKeys, getTalkFlowLines } from './dialogueExtractor'
 
 async function fetchData(type: string, version?: string, lang?: string) {
-  let url: string
-  if (version === "latest") {
-    const response = await fetch('https://api.github.com/repos/Arikatsu/WutheringWaves_Data')
-    const data = await response.json()
-    version = data.default_branch
-  }
-  if (type.toLowerCase() === 'multitext') {
-    url = `https://raw.githubusercontent.com/Arikatsu/WutheringWaves_Data/refs/heads/${version}/Textmaps/${lang}/multi_text/MultiText.json`
-  } else if (type.toLowerCase() === 'multitext_1sthalf') {
-    url = `https://raw.githubusercontent.com/Arikatsu/WutheringWaves_Data/refs/heads/${version}/Textmaps/${lang}/multi_text_1sthalf/MultiText.json`
-  } else if (type.toLowerCase() === 'multitext_2ndhalf') {
-    url = `https://raw.githubusercontent.com/Arikatsu/WutheringWaves_Data/refs/heads/${version}/Textmaps/${lang}/multi_text_2ndhalf/MultiText.json`
-  } else if (type.toLowerCase() === 'flowstate') {
-    url = `https://raw.githubusercontent.com/Arikatsu/WutheringWaves_Data/refs/heads/${version}/BinData/flowState/flowstate.json`
-  } else if (type.toLowerCase() === 'plothandbook') {
-    url = `https://raw.githubusercontent.com/Arikatsu/WutheringWaves_Data/refs/heads/${version}/BinData/PlotHandBook/plothandbookconfig.json`
-  } else {
-    throw new Error(`Unsupported type: ${type}`)
-  }
-
   const cacheKey = `${type}-${version}-${lang}`
 
   // check if the data is already cached locally
@@ -37,9 +17,37 @@ async function fetchData(type: string, version?: string, lang?: string) {
     return cachedData
   }
 
-  // if not, fetch it from GitHub
+  // if not, fetch it from our brand new Cloudflare API!
   console.log(`Downloading ${cacheKey}...`)
-  const response = await fetch(url)
+
+  let url = `/api/wuwa-data?type=${type}&version=${version || 'latest'}&lang=${lang || 'en'}`
+  let response = await fetch(url)
+
+  // local fallback: hit GitHub directly
+  // if running locally (vite dev) without Wrangler, the /api endpoint will give 404.
+  if (!response.ok && response.status === 404) {
+    console.log(`[Local Fallback] /api/wuwa-data failed, hitting GitHub directly...`)
+    if (version === 'latest') {
+      const gitResponse = await fetch('https://api.github.com/repos/Arikatsu/WutheringWaves_Data')
+      const gitData = await gitResponse.json()
+      version = gitData.default_branch
+    }
+    if (type.toLowerCase() === 'multitext') {
+      url = `https://raw.githubusercontent.com/Arikatsu/WutheringWaves_Data/refs/heads/${version}/Textmaps/${lang}/multi_text/MultiText.json`
+    } else if (type.toLowerCase() === 'multitext_1sthalf') {
+      url = `https://raw.githubusercontent.com/Arikatsu/WutheringWaves_Data/refs/heads/${version}/Textmaps/${lang}/multi_text_1sthalf/MultiText.json`
+    } else if (type.toLowerCase() === 'multitext_2ndhalf') {
+      url = `https://raw.githubusercontent.com/Arikatsu/WutheringWaves_Data/refs/heads/${version}/Textmaps/${lang}/multi_text_2ndhalf/MultiText.json`
+    } else if (type.toLowerCase() === 'flowstate') {
+      url = `https://raw.githubusercontent.com/Arikatsu/WutheringWaves_Data/refs/heads/${version}/BinData/flowState/flowstate.json`
+    } else if (type.toLowerCase() === 'plothandbook') {
+      url = `https://raw.githubusercontent.com/Arikatsu/WutheringWaves_Data/refs/heads/${version}/BinData/PlotHandBook/plothandbookconfig.json`
+    } else {
+      throw new Error(`Unsupported type: ${type}`)
+    }
+    response = await fetch(url)
+  }
+
   const data = await response.text()
 
   // cache the downloaded text locally
