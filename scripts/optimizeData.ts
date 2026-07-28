@@ -8,7 +8,11 @@ const LANGUAGES = ['de', 'en', 'es', 'fr', 'ja', 'ko', 'pt', 'th', 'zh-Hans', 'z
 
 async function fetchJson(url: string) {
   console.log(`Fetching ${url}...`)
-  const res = await fetch(url)
+  const headers: Record<string, string> = { 'User-Agent': 'Node.js' }
+  if (process.env.GITHUB_TOKEN) {
+    headers['Authorization'] = `token ${process.env.GITHUB_TOKEN}`
+  }
+  const res = await fetch(url, { headers })
   if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.statusText}`)
   return res.json()
 }
