@@ -30,7 +30,7 @@ export async function handleGetOtherLanguage(eventData: any) {
 }
 
 export async function handleGetOtherLanguageById(eventData: any) {
-  const { id: questId } = eventData
+  const { questId } = eventData
 
   const chunkId = getChunkId(questId)
   const fetchedChunk = await getChunkData(chunkId)
