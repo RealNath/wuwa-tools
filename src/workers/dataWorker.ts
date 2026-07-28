@@ -1,8 +1,8 @@
 import { getActionsForStateKeys, getTalkFlowLines } from './dialogueExtractor'
 
 async function fetchData(type: string, lang?: string, version: string = Date.now().toString()) {
-  const isProd = import.meta.env.PROD
-  const baseUrl = isProd
+  const isLocal = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1'
+  const baseUrl = !isLocal
     ? 'https://raw.githubusercontent.com/realnath/wuwa-tools/refs/heads/data'
     : '/data'
 
@@ -18,7 +18,7 @@ async function fetchData(type: string, lang?: string, version: string = Date.now
     throw new Error(`Unsupported type: ${type}`)
   }
 
-  const response = await fetch(isProd ? url : `${url}?v=${version}`)
+  const response = await fetch(!isLocal ? url : `${url}?v=${version}`)
   if (!response.ok) {
     throw new Error(`Failed to load ${url}`)
   }
