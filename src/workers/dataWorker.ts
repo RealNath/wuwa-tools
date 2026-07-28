@@ -1,6 +1,6 @@
 import { getActionsForStateKeys, getTalkFlowLines } from './dialogueExtractor'
 
-async function fetchData(type: string, lang?: string) {
+async function fetchData(type: string, lang?: string, version: string = Date.now().toString()) {
   let url = ''
 
   if (type === 'multitext') {
@@ -13,7 +13,7 @@ async function fetchData(type: string, lang?: string) {
     throw new Error(`Unsupported type: ${type}`)
   }
 
-  const response = await fetch(url)
+  const response = await fetch(`${url}?v=${version}`)
   if (!response.ok) {
     throw new Error(`Failed to load ${url}`)
   }
@@ -42,8 +42,6 @@ async function fetchMultiTextDict(lang: string): Promise<Record<string, string>>
   }
 }
 
-
-
 self.onmessage = async (event) => {
   const command = event.data.command
 
@@ -61,7 +59,9 @@ self.onmessage = async (event) => {
       } else {
         const data = await fetchData(dataType, lang)
         // Convert to array if it's an object so the view doesn't crash
-        const items = Array.isArray(data) ? data : Object.entries(data).map(([k, v]) => ({ Id: k, Content: JSON.stringify(v) }))
+        const items = Array.isArray(data)
+          ? data
+          : Object.entries(data).map(([k, v]) => ({ Id: k, Content: JSON.stringify(v) }))
         self.postMessage({
           status: 'success',
           data: items.slice(0, limit),
@@ -92,7 +92,7 @@ self.onmessage = async (event) => {
 
       const ids: string[] = []
       for (const [id, content] of Object.entries(multiText)) {
-        if (content.toLowerCase().includes(input.toLowerCase())) {
+        if (content.toLowerCase() === input.toLowerCase()) {
           ids.push(id)
         }
       }
@@ -100,30 +100,28 @@ self.onmessage = async (event) => {
 
       const wikiTexts = []
 
-      // 3. For each language, pull the optimized dictionary
       const allDicts: Record<string, Record<string, string>> = {}
       for (const lang of languages) {
         allDicts[lang] = await fetchMultiTextDict(lang)
       }
 
-      // 4. Generate the WikiText for each matched ID
       for (const id of ids) {
         const dict = {
-          'en': multiText[id] || '',
+          en: multiText[id] || '',
           'zh-Hans': allDicts['zh-Hans']?.[id] || '',
           'zh-Hant': allDicts['zh-Hant']?.[id] || '',
-          'ja': allDicts['ja']?.[id] || '',
-          'ko': allDicts['ko']?.[id] || '',
-          'fr': allDicts['fr']?.[id] || '',
-          'de': allDicts['de']?.[id] || '',
-          'es': allDicts['es']?.[id] || '',
-          'th': allDicts['th']?.[id] || '',
-          'pt': allDicts['pt']?.[id] || ''
+          ja: allDicts['ja']?.[id] || '',
+          ko: allDicts['ko']?.[id] || '',
+          fr: allDicts['fr']?.[id] || '',
+          de: allDicts['de']?.[id] || '',
+          es: allDicts['es']?.[id] || '',
+          th: allDicts['th']?.[id] || '',
+          pt: allDicts['pt']?.[id] || '',
         }
 
         wikiTexts.push({
           id,
-          wikiText: `{{Other Languages\n|en   = ${dict['en']}\n|zhs  = ${dict['zh-Hans']}\n|zht  = ${dict['zh-Hant']}\n|ja   = ${dict['ja']}\n|ko   = ${dict['ko']}\n|fr   = ${dict['fr']}\n|de   = ${dict['de']}\n|es   = ${dict['es']}\n|th   = ${dict['th']}\n|pt   = ${dict['pt']}\n}}`
+          wikiText: `{{Other Languages\n|en   = ${dict['en']}\n|zhs  = ${dict['zh-Hans']}\n|zht  = ${dict['zh-Hant']}\n|ja   = ${dict['ja']}\n|ko   = ${dict['ko']}\n|fr   = ${dict['fr']}\n|de   = ${dict['de']}\n|es   = ${dict['es']}\n|th   = ${dict['th']}\n|pt   = ${dict['pt']}\n}}`,
         })
       }
 
