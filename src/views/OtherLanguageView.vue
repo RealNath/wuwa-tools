@@ -17,8 +17,18 @@ function handleSearch() {
   worker?.postMessage({
     command: 'get_other_language',
     input: searchQuery.value,
-    version: "latest",
+    version: 'latest',
   })
+}
+
+function getOtherLanguageById(event: Event, item: any) {
+  const detailsElement = event.target as HTMLDetailsElement
+  if (detailsElement.open && item.wikiText === 'Loading data...') {
+    worker?.postMessage({
+      command: 'get_other_language_by_id',
+      id: item.questId,
+    })
+  }
 }
 
 onMounted(() => {
@@ -27,10 +37,19 @@ onMounted(() => {
   worker.onmessage = (event) => {
     const result = event.data
 
-    if (result.status === 'success') {
-      items.value = result.data
+    if (result.command === 'get_other_language_by_id') {
+      if (result.status === 'success') {
+        const foundItem = items.value.find((i) => i.questId === result.questId)
+        if (foundItem) {
+          foundItem.wikiText = result.data
+        }
+      }
     } else {
-      errorMessage.value = result.message
+      if (result.status === 'success') {
+        items.value = result.data
+      } else {
+        errorMessage.value = result.message
+      }
     }
 
     isLoading.value = false
@@ -51,15 +70,16 @@ onUnmounted(() => {
       v-model="searchQuery"
       @keydown.enter="handleSearch"
       type="text"
-      placeholder="Search for the exact full string here.">
+      placeholder="Search for the exact full string here."
+    >
     </Input>
 
     <div v-if="isLoading">Loading data...</div>
     <div v-else-if="errorMessage">Error: {{ errorMessage }}</div>
     <ul v-else>
-      <li v-for="item in items" :key="item.id">
-        <details>
-          <summary>ID: {{ item.id }}</summary>
+      <li v-for="item in items" :key="item.questId">
+        <details @toggle="getOtherLanguageById($event, item)">
+          <summary>ID: {{ item.questId }}</summary>
           <pre>{{ item.wikiText }}</pre>
         </details>
       </li>

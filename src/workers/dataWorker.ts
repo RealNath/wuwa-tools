@@ -69,12 +69,14 @@ async function fetchMultiTextDict(lang: string): Promise<Record<string, string>>
   }
 }
 
-function getChunkId(id: string): string {
+function getChunkId(questId: string): string {
   let hash = 5381
-  for (let i = 0; i < id.length; i++) {
-    hash = ((hash << 5) + hash) + id.charCodeAt(i)
+  for (let i = 0; i < questId.length; i++) {
+    hash = (hash << 5) + hash + questId.charCodeAt(i)
   }
-  return Math.abs(hash % 64).toString(16).padStart(2, '0')
+  return Math.abs(hash % 64)
+    .toString(16)
+    .padStart(2, '0')
 }
 
 const chunkCache: Record<string, any> = {}
@@ -103,7 +105,9 @@ async function getChunkData(chunkId: string) {
     const data = await response.json()
 
     chunkCache[chunkId] = data
-    try { await set(cacheKey, data) } catch (e) {
+    try {
+      await set(cacheKey, data)
+    } catch (e) {
       console.log(e)
     }
     return data
@@ -149,56 +153,90 @@ self.onmessage = async (event) => {
     try {
       const multiText = await fetchMultiTextDict('en')
 
-      const ids: string[] = []
-      for (const [id, content] of Object.entries(multiText)) {
+      const questIds: string[] = []
+      for (const [questId, content] of Object.entries(multiText)) {
         if (content.toLowerCase() === input.toLowerCase()) {
-          ids.push(id)
+          questIds.push(questId)
         }
       }
-      console.log(`Found ${ids.length} matching IDs`)
+      console.log(`Found ${questIds.length} matching IDs`)
 
       const chunkIds = new Set<string>()
-      for (const id of ids) {
-        chunkIds.add(getChunkId(id))
+      for (const questId of questIds) {
+        chunkIds.add(getChunkId(questId))
       }
 
-      const chunkData: Record<string, any> = {}
-      await Promise.all(
-        Array.from(chunkIds).map(async (chunkId) => {
-          chunkData[chunkId] = await getChunkData(chunkId)
-        })
-      )
+      // const chunkData: Record<string, any> = {}
+      // await Promise.all(
+      //   Array.from(chunkIds).map(async (chunkId) => {
+      //     chunkData[chunkId] = await getChunkData(chunkId)
+      //   }),
+      // )
 
       const wikiTexts = []
-      for (const id of ids) {
-        const chunkId = getChunkId(id)
-        const itemData = chunkData[chunkId]?.[id] || {}
+      for (const questId of questIds) {
+        // const chunkId = getChunkId(id)
+        // const itemData = chunkData[chunkId]?.[id] || {}
 
-        const dict = {
-          en: itemData['en'] || multiText[id] || '',
-          'zh-Hans': itemData['zh-Hans'] || '',
-          'zh-Hant': itemData['zh-Hant'] || '',
-          ja: itemData['ja'] || '',
-          ko: itemData['ko'] || '',
-          fr: itemData['fr'] || '',
-          de: itemData['de'] || '',
-          es: itemData['es'] || '',
-          th: itemData['th'] || '',
-          pt: itemData['pt'] || '',
-        }
+        // const dict = {
+        //   en: itemData['en'] || multiText[id] || '',
+        //   'zh-Hans': itemData['zh-Hans'] || '',
+        //   'zh-Hant': itemData['zh-Hant'] || '',
+        //   ja: itemData['ja'] || '',
+        //   ko: itemData['ko'] || '',
+        //   fr: itemData['fr'] || '',
+        //   de: itemData['de'] || '',
+        //   es: itemData['es'] || '',
+        //   th: itemData['th'] || '',
+        //   pt: itemData['pt'] || '',
+        // }
 
         wikiTexts.push({
-          id,
-          wikiText: `{{Other Languages\n|en   = ${dict['en']}\n|zhs  = ${dict['zh-Hans']}\n|zht  = ${dict['zh-Hant']}\n|ja   = ${dict['ja']}\n|ko   = ${dict['ko']}\n|fr   = ${dict['fr']}\n|de   = ${dict['de']}\n|es   = ${dict['es']}\n|th   = ${dict['th']}\n|pt   = ${dict['pt']}\n}}`,
+          questId: questId,
+          // wikiText: `{{Other Languages\n|en   = ${dict['en']}\n|zhs  = ${dict['zh-Hans']}\n|zht  = ${dict['zh-Hant']}\n|ja   = ${dict['ja']}\n|ko   = ${dict['ko']}\n|fr   = ${dict['fr']}\n|de   = ${dict['de']}\n|es   = ${dict['es']}\n|th   = ${dict['th']}\n|pt   = ${dict['pt']}\n}}`,
+          wikiText: 'Loading data...',
         })
       }
 
       // Sort by ID
-      wikiTexts.sort((a, b) => a.id.localeCompare(b.id))
+      wikiTexts.sort((a, b) => a.questId.localeCompare(b.questId))
 
       self.postMessage({
         status: 'success',
         data: wikiTexts,
+      })
+    } catch (e) {
+      self.postMessage({
+        status: 'error',
+        message: String(e),
+      })
+    }
+  } else if (command == 'get_other_language_by_id') {
+    const { id: questId } = event.data
+
+    try {
+      const chunkId = getChunkId(questId)
+      const fetchedChunk = await getChunkData(chunkId)
+      const itemData = fetchedChunk[questId] || {}
+
+      const dict = {
+        en: itemData['en'] || '',
+        'zh-Hans': itemData['zh-Hans'] || '',
+        'zh-Hant': itemData['zh-Hant'] || '',
+        ja: itemData['ja'] || '',
+        ko: itemData['ko'] || '',
+        fr: itemData['fr'] || '',
+        de: itemData['de'] || '',
+        es: itemData['es'] || '',
+        th: itemData['th'] || '',
+        pt: itemData['pt'] || '',
+      }
+
+      self.postMessage({
+        status: 'success',
+        command: 'get_other_language_by_id',
+        questId: questId,
+        data: `{{Other Languages\n|en   = ${dict['en']}\n|zhs  = ${dict['zh-Hans']}\n|zht  = ${dict['zh-Hant']}\n|ja   = ${dict['ja']}\n|ko   = ${dict['ko']}\n|fr   = ${dict['fr']}\n|de   = ${dict['de']}\n|es   = ${dict['es']}\n|th   = ${dict['th']}\n|pt   = ${dict['pt']}\n}}`,
       })
     } catch (e) {
       self.postMessage({
