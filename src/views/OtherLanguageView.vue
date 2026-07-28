@@ -47,6 +47,7 @@ function handleSearch() {
   worker?.postMessage({
     command: 'get_other_language',
     input: searchQuery.value,
+    lang: position.value,
     version: 'latest',
   })
 }
@@ -94,7 +95,7 @@ onUnmounted(() => {
 <template>
   <div class="other-language">
     <h1 class="text-3xl font-bold">Other Language</h1>
-    <div>
+    <div class="flex items-center gap-2">
       <Input
         id="other-language-search"
         :disabled="isLoading"
@@ -104,7 +105,7 @@ onUnmounted(() => {
         placeholder="Search for the exact full string here."
       >
       </Input>
-      <!-- <DropdownMenu>
+      <DropdownMenu>
 
         <DropdownMenuTrigger as-child>
           <Button variant="outline">{{ position }}</Button>
@@ -124,7 +125,7 @@ onUnmounted(() => {
 
         </DropdownMenuContent>
 
-      </DropdownMenu> -->
+      </DropdownMenu>
     </div>
 
     <div v-if="isLoading">Loading data...</div>

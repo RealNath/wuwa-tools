@@ -1,8 +1,8 @@
 import { fetchMultiTextDict, getChunkId, getChunkData } from '@/workers/dataFetcher'
 
 export async function handleGetOtherLanguage(eventData: any) {
-  const { input } = eventData
-  const multiText = await fetchMultiTextDict('en')
+  const { input, lang } = eventData
+  const multiText = await fetchMultiTextDict(lang || 'en')
 
   const questIds: string[] = []
   for (const [questId, content] of Object.entries(multiText)) {
