@@ -108,8 +108,9 @@ self.onmessage = async (event) => {
       const allDicts: Record<string, Record<string, string>> = {}
       await Promise.all(
         languages.map(async (lang) => {
+          console.log(`Downloading ${lang} data`)
           allDicts[lang] = await fetchMultiTextDict(lang)
-        })
+        }),
       )
 
       for (const id of ids) {
