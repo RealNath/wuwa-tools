@@ -14,6 +14,7 @@ let worker: Worker | null = null
 function handleSearch() {
   if (!searchQuery.value) return
   isLoading.value = true
+  errorMessage.value = ''
   worker?.postMessage({
     command: 'extract_dialogue',
     questId: Number(searchQuery.value),
