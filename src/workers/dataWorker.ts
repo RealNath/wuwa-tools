@@ -1,4 +1,5 @@
 import { getActionsForStateKeys, getTalkFlowLines } from './dialogueExtractor'
+import { get, set } from 'idb-keyval'
 
 async function fetchData(type: string, lang?: string, version: string = Date.now().toString()) {
   const isLocal = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1'
@@ -36,10 +37,32 @@ async function fetchMultiTextDict(lang: string): Promise<Record<string, string>>
     return memoryCache[lang]
   }
 
+  const cacheKey = `multitext-${lang}`
+
+  // find and load from persistent storage
+  try {
+    const cachedDict = await get(cacheKey)
+    if (cachedDict) {
+      console.log(`[Cache Hit] Loaded ${cacheKey} from Persistent Storage instantly!`)
+      memoryCache[lang] = cachedDict
+      return cachedDict
+    }
+  } catch (e) {
+    console.warn(`Could not read from IndexedDB for ${lang}`, e)
+  }
+
   try {
     // The optimized file is ALREADY a flat dictionary! No looping required.
     const dict = await fetchData('multitext', lang)
     memoryCache[lang] = dict
+
+    // save to persistent storage
+    try {
+      await set(cacheKey, dict)
+    } catch (e) {
+      console.warn(`Could not save to IndexedDB for ${lang}`, e)
+    }
+
     return dict
   } catch (e) {
     console.warn(`Could not load multitext for ${lang}`, e)
