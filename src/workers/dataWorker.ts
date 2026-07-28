@@ -106,9 +106,11 @@ self.onmessage = async (event) => {
       const wikiTexts = []
 
       const allDicts: Record<string, Record<string, string>> = {}
-      for (const lang of languages) {
-        allDicts[lang] = await fetchMultiTextDict(lang)
-      }
+      await Promise.all(
+        languages.map(async (lang) => {
+          allDicts[lang] = await fetchMultiTextDict(lang)
+        })
+      )
 
       for (const id of ids) {
         const dict = {

@@ -24,29 +24,31 @@ async function ensureDir(dir: string) {
 }
 
 async function optimizeMultiText(version: string, outDir: string) {
-  for (const lang of LANGUAGES) {
-    const dict: Record<string, string> = {}
-    const chunks = ['multi_text', 'multi_text_1sthalf', 'multi_text_2ndhalf']
+  await Promise.all(
+    LANGUAGES.map(async (lang) => {
+      const dict: Record<string, string> = {}
+      const chunks = ['multi_text', 'multi_text_1sthalf', 'multi_text_2ndhalf']
 
-    for (const chunk of chunks) {
-      const url = `${RAW_URL}/${version}/Textmaps/${lang}/${chunk}/MultiText.json`
-      try {
-        const data = await fetchJson(url)
-        for (const item of data) {
-          if (!item.Id) continue
-          if (chunk === 'multi_text' && item.RedirectDbIndex === 1) continue
+      for (const chunk of chunks) {
+        const url = `${RAW_URL}/${version}/Textmaps/${lang}/${chunk}/MultiText.json`
+        try {
+          const data = await fetchJson(url)
+          for (const item of data) {
+            if (!item.Id) continue
+            if (chunk === 'multi_text' && item.RedirectDbIndex === 1) continue
 
-          dict[item.Id] = item.Content
+            dict[item.Id] = item.Content
+          }
+        } catch (e) {
+          console.warn(`Skipping ${chunk} for ${lang}:`, e)
         }
-      } catch (e) {
-        console.warn(`Skipping ${chunk} for ${lang}:`, e)
       }
-    }
 
-    const outFile = path.join(outDir, `multitext_${lang}.json`)
-    fs.writeFileSync(outFile, JSON.stringify(dict))
-    console.log(`Saved ${outFile} (Keys: ${Object.keys(dict).length})`)
-  }
+      const outFile = path.join(outDir, `multitext_${lang}.json`)
+      fs.writeFileSync(outFile, JSON.stringify(dict))
+      console.log(`Saved ${outFile} (Keys: ${Object.keys(dict).length})`)
+    })
+  )
 }
 
 async function optimizeFlowState(version: string, outDir: string) {
@@ -110,9 +112,11 @@ async function main() {
   await ensureDir(outDir)
   fs.writeFileSync(path.join(outDir, '.gitignore'), '!*\n')
 
-  await optimizePlotHandbook(version, outDir)
-  await optimizeFlowState(version, outDir)
-  await optimizeMultiText(version, outDir)
+  await Promise.all([
+    optimizePlotHandbook(version, outDir),
+    optimizeFlowState(version, outDir),
+    optimizeMultiText(version, outDir),
+  ])
 
   console.log('All data optimized successfully!')
 }
