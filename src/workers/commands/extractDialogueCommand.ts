@@ -1,4 +1,4 @@
-import { fetchData, fetchMultiTextDict } from '@/workers/dataFetcher'
+import { fetchData, fetchMultiTextDict, getChunkId, getChunkData } from '@/workers/dataFetcher'
 import { getActionsForStateKeys, getTalkFlowLines } from '@/workers/dialogueExtractor'
 
 export async function handleExtractDialogue(eventData: any) {
@@ -20,6 +20,7 @@ export async function handleExtractDialogue(eventData: any) {
   }
 
   const stateKeys: string[] = []
+  const flowListNames = new Set<string>()
   const stateKeyTips: Record<string, string> = {}
   let currentTip = ''
 
@@ -38,6 +39,7 @@ export async function handleExtractDialogue(eventData: any) {
 
     const stateKey = `${flowListName}_${flowId}_${stateId}`
     stateKeys.push(stateKey)
+    flowListNames.add(flowListName)
     stateKeyTips[stateKey] = currentTip
   }
 
@@ -45,8 +47,15 @@ export async function handleExtractDialogue(eventData: any) {
     throw new Error(`No valid state keys found for QuestId ${questId}.`)
   }
 
-  // fetch FlowState
-  const flowstateData = await fetchData('flowstate')
+  // fetch the chunk file of each flowListName
+  const flowstateData: Record<string, any> = {}
+  for (const flowListName of flowListNames) {
+    const chunkId = getChunkId(64, flowListName)
+    const fetchedChunk = await getChunkData('flowstate', chunkId)
+    // merge the chunk data to a dict
+    Object.assign(flowstateData, fetchedChunk)
+  }
+
   const actionsDict = getActionsForStateKeys(flowstateData, stateKeys)
 
   // fetch Multitext Dict

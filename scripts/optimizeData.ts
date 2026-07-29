@@ -23,12 +23,14 @@ async function ensureDir(dir: string) {
   }
 }
 
-function getChunkId(id: string): string {
+function getChunkId(chunk_count: number, id: string): string {
   let hash = 5381
   for (let i = 0; i < id.length; i++) {
-    hash = ((hash << 5) + hash) + id.charCodeAt(i)
+    hash = (hash << 5) + hash + id.charCodeAt(i)
   }
-  return Math.abs(hash % 64).toString(16).padStart(2, '0')
+  return Math.abs(hash % chunk_count)
+    .toString(16)
+    .padStart(2, '0')
 }
 
 async function optimizeMultiText(version: string, outDir: string) {
@@ -58,11 +60,12 @@ async function optimizeMultiText(version: string, outDir: string) {
       const outFile = path.join(outDir, `multitext_${lang}.json`)
       fs.writeFileSync(outFile, JSON.stringify(dict))
       console.log(`Saved ${outFile} (Keys: ${Object.keys(dict).length})`)
-    })
+    }),
   )
 
+  // chunks based on id
   console.log('Generating chunked translation files...')
-  const chunkDir = path.join(outDir, 'chunks')
+  const chunkDir = path.join(outDir, 'multitext_chunks')
   await ensureDir(chunkDir)
 
   const allIds = new Set<string>()
@@ -75,7 +78,7 @@ async function optimizeMultiText(version: string, outDir: string) {
   const chunksData: Record<string, Record<string, Record<string, string>>> = {}
 
   for (const id of allIds) {
-    const chunkId = getChunkId(id)
+    const chunkId = getChunkId(64, id)
     if (!chunksData[chunkId]) {
       chunksData[chunkId] = {}
     }
@@ -93,12 +96,13 @@ async function optimizeMultiText(version: string, outDir: string) {
     const chunkFile = path.join(chunkDir, `chunk_${chunkId}.json`)
     fs.writeFileSync(chunkFile, JSON.stringify(data))
   }
-  console.log(`Saved ${Object.keys(chunksData).length} chunk files to chunks/`)
+  console.log(`Saved ${Object.keys(chunksData).length} chunk files to multitext_chunks/`)
 }
 
-// convert list of dict to dict (key: StateKey, value: the remaining key-value pairs)
 async function optimizeFlowState(version: string, outDir: string) {
   const url = `${RAW_URL}/${version}/BinData/flowState/flowstate.json`
+
+  // convert list of dict to dict (key: StateKey, value: the remaining key-value pairs)
   try {
     const data = await fetchJson(url)
     const optimized = data.reduce((acc: any, currentItem: any) => {
@@ -107,9 +111,31 @@ async function optimizeFlowState(version: string, outDir: string) {
       return acc
     }, {})
 
-    const outFile = path.join(outDir, 'flowstate.json')
-    fs.writeFileSync(outFile, JSON.stringify(optimized))
-    console.log(`Saved ${outFile}`)
+    // chunks based on FlowListName
+    console.log('Generating chunked flowstate files...')
+    const chunkDir = path.join(outDir, 'flowstate_chunks')
+    await ensureDir(chunkDir)
+
+    const chunksData: Record<string, Record<string, any>> = {}
+
+    for (const [stateKey, stateData] of Object.entries(optimized)) {
+      // get FlowListName
+      const stateKeyParts = stateKey.split('_')
+      const flowListName = stateKeyParts.length >= 3 ? stateKeyParts.slice(0, -2).join('_') : stateKey
+
+      const chunkId = getChunkId(64, flowListName)
+      if (!chunksData[chunkId]) {
+        chunksData[chunkId] = {}
+      }
+
+      chunksData[chunkId][stateKey] = stateData
+    }
+
+    for (const [chunkId, chunkContent] of Object.entries(chunksData)) {
+      const chunkFile = path.join(chunkDir, `chunk_${chunkId}.json`)
+      fs.writeFileSync(chunkFile, JSON.stringify(chunkContent))
+    }
+    console.log(`Saved ${Object.keys(chunksData).length} chunk files to flowstate_chunks/`)
   } catch (e) {
     console.log(e)
   }
@@ -135,13 +161,13 @@ async function optimizePlotHandbook(version: string, outDir: string) {
             },
           }))
         }
-      } catch {
-        // Ignored
+      } catch (e) {
+        console.log(e)
       }
 
       return {
         QuestId: item.QuestId,
-        Data: parsedData, // Now a real object, not a stringified JSON!
+        Data: parsedData,
       }
     })
 

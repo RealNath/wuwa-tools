@@ -1,6 +1,10 @@
 import { get, set } from 'idb-keyval'
 
-export async function fetchData(type: string, lang?: string, version: string = Date.now().toString()) {
+export async function fetchData(
+  type: 'multitext' | 'flowstate' | 'plothandbook',
+  lang?: string,
+  version: string = Date.now().toString(),
+) {
   const isLocal = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1'
   const baseUrl = !isLocal
     ? 'https://raw.githubusercontent.com/realnath/wuwa-tools/refs/heads/data'
@@ -66,26 +70,27 @@ export async function fetchMultiTextDict(lang: string): Promise<Record<string, s
   }
 }
 
-export function getChunkId(id: string): string {
+export function getChunkId(chunk_count: number, id: string): string {
   let hash = 5381
   for (let i = 0; i < id.length; i++) {
     hash = (hash << 5) + hash + id.charCodeAt(i)
   }
-  return Math.abs(hash % 64)
+  return Math.abs(hash % chunk_count)
     .toString(16)
     .padStart(2, '0')
 }
 
 export const chunkCache: Record<string, any> = {}
 
-export async function getChunkData(chunkId: string) {
-  if (chunkCache[chunkId]) return chunkCache[chunkId]
+export async function getChunkData(type: 'multitext' | 'flowstate', chunkId: string) {
+  const cacheKey = `chunk-${type}-${chunkId}`
 
-  const cacheKey = `chunk-${chunkId}`
+  if (chunkCache[cacheKey]) return chunkCache[cacheKey]
+
   try {
     const cached = await get(cacheKey)
     if (cached) {
-      chunkCache[chunkId] = cached
+      chunkCache[cacheKey] = cached
       return cached
     }
   } catch (e) {
@@ -97,12 +102,14 @@ export async function getChunkData(chunkId: string) {
     const baseUrl = !isLocal
       ? 'https://raw.githubusercontent.com/realnath/wuwa-tools/refs/heads/data'
       : '/data'
-    const url = `${baseUrl}/chunks/chunk_${chunkId}.json`
+
+    const url = `${baseUrl}/${type}_chunks/chunk_${chunkId}.json`
+
     const response = await fetch(!isLocal ? url : `${url}?v=${Date.now()}`)
     if (!response.ok) throw new Error(`Failed to load chunk ${chunkId}`)
     const data = await response.json()
 
-    chunkCache[chunkId] = data
+    chunkCache[cacheKey] = data
     try {
       await set(cacheKey, data)
     } catch (e) {

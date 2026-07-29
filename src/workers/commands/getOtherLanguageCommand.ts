@@ -32,8 +32,8 @@ export async function handleGetOtherLanguage(eventData: any) {
 export async function handleGetOtherLanguageById(eventData: any) {
   const { id } = eventData
 
-  const chunkId = getChunkId(id)
-  const fetchedChunk = await getChunkData(chunkId)
+  const chunkId = getChunkId(64, id)
+  const fetchedChunk = await getChunkData('multitext', chunkId)
   const itemData = fetchedChunk[id] || {}
 
   const dict = {
