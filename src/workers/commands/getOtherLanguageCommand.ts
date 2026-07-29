@@ -4,24 +4,24 @@ export async function handleGetOtherLanguage(eventData: any) {
   const { input, lang } = eventData
   const multiText = await fetchMultiTextDict(lang || 'en')
 
-  const questIds: string[] = []
-  for (const [questId, content] of Object.entries(multiText)) {
+  const ids: string[] = []
+  for (const [id, content] of Object.entries(multiText)) {
     if (content.toLowerCase() === input.toLowerCase()) {
-      questIds.push(questId)
+      ids.push(id)
     }
   }
-  console.log(`Found ${questIds.length} matching IDs`)
+  console.log(`Found ${ids.length} matching IDs`)
 
   const wikiTexts = []
-  for (const questId of questIds) {
+  for (const id of ids) {
     wikiTexts.push({
-      questId: questId,
+      id: id,
       wikiText: 'Loading data...',
     })
   }
 
   // Sort by ID
-  wikiTexts.sort((a, b) => a.questId.localeCompare(b.questId))
+  wikiTexts.sort((a, b) => a.id.localeCompare(b.id))
 
   self.postMessage({
     status: 'success',
@@ -30,11 +30,11 @@ export async function handleGetOtherLanguage(eventData: any) {
 }
 
 export async function handleGetOtherLanguageById(eventData: any) {
-  const { questId } = eventData
+  const { id } = eventData
 
-  const chunkId = getChunkId(questId)
+  const chunkId = getChunkId(id)
   const fetchedChunk = await getChunkData(chunkId)
-  const itemData = fetchedChunk[questId] || {}
+  const itemData = fetchedChunk[id] || {}
 
   const dict = {
     en: itemData['en'] || '',
@@ -52,7 +52,7 @@ export async function handleGetOtherLanguageById(eventData: any) {
   self.postMessage({
     status: 'success',
     command: 'get_other_language_by_id',
-    questId: questId,
+    id: id,
     data: `{{Other Languages\n|en   = ${dict['en']}\n|zhs  = ${dict['zh-Hans']}\n|zht  = ${dict['zh-Hant']}\n|ja   = ${dict['ja']}\n|ko   = ${dict['ko']}\n|fr   = ${dict['fr']}\n|de   = ${dict['de']}\n|es   = ${dict['es']}\n|th   = ${dict['th']}\n|pt   = ${dict['pt']}\n}}`,
   })
 }

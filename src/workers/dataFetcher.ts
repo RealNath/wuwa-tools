@@ -66,10 +66,10 @@ export async function fetchMultiTextDict(lang: string): Promise<Record<string, s
   }
 }
 
-export function getChunkId(questId: string): string {
+export function getChunkId(id: string): string {
   let hash = 5381
-  for (let i = 0; i < questId.length; i++) {
-    hash = (hash << 5) + hash + questId.charCodeAt(i)
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash << 5) + hash + id.charCodeAt(i)
   }
   return Math.abs(hash % 64)
     .toString(16)

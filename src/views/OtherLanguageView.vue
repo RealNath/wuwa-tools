@@ -57,7 +57,7 @@ function getOtherLanguageById(event: Event, item: any) {
   if (detailsElement.open && item.wikiText === 'Loading data...') {
     worker?.postMessage({
       command: 'get_other_language_by_id',
-      questId: item.questId,
+      id: item.id,
     })
   }
 }
@@ -70,7 +70,7 @@ onMounted(() => {
 
     if (result.command === 'get_other_language_by_id') {
       if (result.status === 'success') {
-        const foundItem = items.value.find((i) => i.questId === result.questId)
+        const foundItem = items.value.find((i) => i.id === result.id)
         if (foundItem) {
           foundItem.wikiText = result.data
         }
@@ -131,9 +131,9 @@ onUnmounted(() => {
     <div v-if="isLoading">Loading data...</div>
     <div v-else-if="errorMessage">Error: {{ errorMessage }}</div>
     <ul v-else>
-      <li v-for="item in items" :key="item.questId">
+      <li v-for="item in items" :key="item.id">
         <details @toggle="getOtherLanguageById($event, item)">
-          <summary>ID: {{ item.questId }}</summary>
+          <summary>ID: {{ item.id }}</summary>
           <pre>{{ item.wikiText }}</pre>
         </details>
       </li>

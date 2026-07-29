@@ -20,15 +20,16 @@ export function formatDialogue(characterName: string, dialogue: string, prefix =
   return line
 }
 
-export function getActionsForStateKeys(flowstateData: any[], stateKeys: string[]): Record<string, string> {
-  const stateKeysSet = new Set(stateKeys)
+export function getActionsForStateKeys(flowstateData: Record<string, Record<string, any>>, stateKeys: string[]): Record<string, string> {
   const result: Record<string, string> = {}
 
-  for (const item of flowstateData) {
-    if (stateKeysSet.has(item.StateKey)) {
-      result[item.StateKey] = item.Actions
+  for (const stateKey of stateKeys) {
+    const data = flowstateData[stateKey]
+    if (data && data.Actions) {
+      result[stateKey] = data.Actions
     }
   }
+
   return result
 }
 

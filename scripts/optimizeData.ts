@@ -73,13 +73,13 @@ async function optimizeMultiText(version: string, outDir: string) {
   }
 
   const chunksData: Record<string, Record<string, Record<string, string>>> = {}
-  
+
   for (const id of allIds) {
     const chunkId = getChunkId(id)
     if (!chunksData[chunkId]) {
       chunksData[chunkId] = {}
     }
-    
+
     const translationGroup: Record<string, string> = {}
     for (const lang of LANGUAGES) {
       if (allDicts[lang][id] !== undefined) {
@@ -96,15 +96,22 @@ async function optimizeMultiText(version: string, outDir: string) {
   console.log(`Saved ${Object.keys(chunksData).length} chunk files to chunks/`)
 }
 
+// convert list of dict to dict (key: StateKey, value: the remaining key-value pairs)
 async function optimizeFlowState(version: string, outDir: string) {
   const url = `${RAW_URL}/${version}/BinData/flowState/flowstate.json`
   try {
     const data = await fetchJson(url)
+    const optimized = data.reduce((acc: any, currentItem: any) => {
+      const { StateKey, ...theRest } = currentItem
+      acc[StateKey] = theRest
+      return acc
+    }, {})
+
     const outFile = path.join(outDir, 'flowstate.json')
-    fs.writeFileSync(outFile, JSON.stringify(data))
+    fs.writeFileSync(outFile, JSON.stringify(optimized))
     console.log(`Saved ${outFile}`)
   } catch (e) {
-    console.warn(`Failed to process FlowState:`, e)
+    console.log(e)
   }
 }
 
