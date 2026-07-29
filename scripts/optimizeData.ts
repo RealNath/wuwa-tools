@@ -120,8 +120,8 @@ async function optimizeFlowState(version: string, outDir: string) {
 
     for (const [stateKey, stateData] of Object.entries(optimized)) {
       // get FlowListName
-      const stateKeyParts = stateKey.split('_')
-      const flowListName = stateKeyParts.length >= 3 ? stateKeyParts.slice(0, -2).join('_') : stateKey
+      // find two "_x" parts anchored to the end of the string ($), remove them
+      const flowListName = stateKey.replace(/(_[^_]+){2}$/, '')
 
       const chunkId = getChunkId(64, flowListName)
       if (!chunksData[chunkId]) {
