@@ -114,7 +114,7 @@ onUnmounted(() => {
         <DropdownMenuContent>
 
           <DropdownMenuGroup>
-            <DropdownMenuLabel>Select a Language (WIP)</DropdownMenuLabel>
+            <DropdownMenuLabel>Select a Language</DropdownMenuLabel>
 
             <DropdownMenuRadioGroup v-model="position">
               <DropdownMenuRadioItem v-for="lang in languages" :key="lang" :value="lang">
