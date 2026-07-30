@@ -1,5 +1,5 @@
-import { fetchData, fetchMultiTextDict, getChunkId, getChunkData } from '@/workers/dataFetcher'
-import { getActionsForStateKeys, getTalkFlowLines } from '@/workers/dialogueExtractor'
+import { fetchData, fetchMultiTextDict, fetchFlowstateData } from '@/workers/dataFetcher'
+import { getTalkFlowLines } from '@/workers/dialogueExtractor'
 
 export async function handleExtractDialogue(eventData: any) {
   const { questId, lang } = eventData
@@ -47,16 +47,8 @@ export async function handleExtractDialogue(eventData: any) {
     throw new Error(`No valid state keys found for QuestId ${questId}.`)
   }
 
-  // fetch the chunk file of each flowListName
-  const flowstateData: Record<string, any> = {}
-  for (const flowListName of flowListNames) {
-    const chunkId = getChunkId(64, flowListName)
-    const fetchedChunk = await getChunkData('flowstate', chunkId)
-    // merge the chunk data to a dict
-    Object.assign(flowstateData, fetchedChunk)
-  }
-
-  const actionsDict = getActionsForStateKeys(flowstateData, stateKeys)
+  // fetch the chunk files for each flowListName
+  const flowstateData = await fetchFlowstateData(flowListNames)
 
   // fetch Multitext Dict
   const multitextDict = await fetchMultiTextDict(lang || 'en')
@@ -66,7 +58,7 @@ export async function handleExtractDialogue(eventData: any) {
   const finalOutput: string[] = []
 
   for (const stateKey of stateKeys) {
-    const actionString = actionsDict[stateKey]
+    const actionString = flowstateData[stateKey]?.Actions
     if (actionString) {
       const parsedActions = JSON.parse(actionString)
       const lines = getTalkFlowLines(parsedActions, multitextDict)

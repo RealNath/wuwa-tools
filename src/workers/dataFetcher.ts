@@ -1,7 +1,7 @@
 import { get, set } from 'idb-keyval'
 
 export async function fetchData(
-  type: 'multitext' | 'flowstate' | 'plothandbook',
+  type: 'multitext' | 'plothandbook',
   lang?: string,
   version: string = Date.now().toString(),
 ) {
@@ -13,9 +13,7 @@ export async function fetchData(
   let url = ''
 
   if (type === 'multitext') {
-    url = `${baseUrl}/multitext_${lang || 'en'}.json`
-  } else if (type === 'flowstate') {
-    url = `${baseUrl}/flowstate.json`
+    url = `${baseUrl}/multitext/multitext_${lang || 'en'}.json`
   } else if (type === 'plothandbook') {
     url = `${baseUrl}/plothandbook.json`
   } else {
@@ -103,7 +101,7 @@ export async function getChunkData(type: 'multitext' | 'flowstate', chunkId: str
       ? 'https://raw.githubusercontent.com/realnath/wuwa-tools/refs/heads/data'
       : '/data'
 
-    const url = `${baseUrl}/${type}_chunks/chunk_${chunkId}.json`
+    const url = `${baseUrl}/${type}/${type}_chunks/chunk_${chunkId}.json`
 
     const response = await fetch(!isLocal ? url : `${url}?v=${Date.now()}`)
     if (!response.ok) throw new Error(`Failed to load chunk ${chunkId}`)
@@ -120,4 +118,14 @@ export async function getChunkData(type: 'multitext' | 'flowstate', chunkId: str
     console.warn(e)
     return {}
   }
+}
+
+export async function fetchFlowstateData(flowListNames: Iterable<string>): Promise<Record<string, any>> {
+  const flowstateData: Record<string, any> = {}
+  for (const flowListName of flowListNames) {
+    const chunkId = getChunkId(64, flowListName)
+    const fetchedChunk = await getChunkData('flowstate', chunkId)
+    Object.assign(flowstateData, fetchedChunk)
+  }
+  return flowstateData
 }

@@ -57,7 +57,9 @@ async function optimizeMultiText(version: string, outDir: string) {
       }
 
       allDicts[lang] = dict
-      const outFile = path.join(outDir, `multitext_${lang}.json`)
+      const multitextDir = path.join(outDir, 'multitext')
+      await ensureDir(multitextDir)
+      const outFile = path.join(multitextDir, `multitext_${lang}.json`)
       fs.writeFileSync(outFile, JSON.stringify(dict))
       console.log(`Saved ${outFile} (Keys: ${Object.keys(dict).length})`)
     }),
@@ -65,7 +67,7 @@ async function optimizeMultiText(version: string, outDir: string) {
 
   // chunks based on id
   console.log('Generating chunked translation files...')
-  const chunkDir = path.join(outDir, 'multitext_chunks')
+  const chunkDir = path.join(outDir, 'multitext', 'multitext_chunks')
   await ensureDir(chunkDir)
 
   const allIds = new Set<string>()
@@ -113,7 +115,7 @@ async function optimizeFlowState(version: string, outDir: string) {
 
     // chunks based on FlowListName
     console.log('Generating chunked flowstate files...')
-    const chunkDir = path.join(outDir, 'flowstate_chunks')
+    const chunkDir = path.join(outDir, 'flowstate', 'flowstate_chunks')
     await ensureDir(chunkDir)
 
     const chunksData: Record<string, Record<string, any>> = {}

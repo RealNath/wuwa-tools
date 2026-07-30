@@ -20,19 +20,6 @@ export function formatDialogue(characterName: string, dialogue: string, prefix =
   return line
 }
 
-export function getActionsForStateKeys(flowstateData: Record<string, Record<string, any>>, stateKeys: string[]): Record<string, string> {
-  const result: Record<string, string> = {}
-
-  for (const stateKey of stateKeys) {
-    const data = flowstateData[stateKey]
-    if (data && data.Actions) {
-      result[stateKey] = data.Actions
-    }
-  }
-
-  return result
-}
-
 export function getTalkFlowLines(parsedData: any[], multitextDict: Record<string, string>): string[] {
   const showTalks = parsedData.filter((item: any) => item.Name === "ShowTalk")
   if (showTalks.length === 0) return []
