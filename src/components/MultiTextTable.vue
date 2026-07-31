@@ -148,8 +148,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="border rounded-md bg-card text-card-foreground shadow-sm p-4 space-y-4">
-    <div class="flex items-center pb-4 gap-2">
+  <div class="border rounded-md bg-card text-card-foreground shadow-sm p-0 md:p-4 space-y-4">
+    <div class="flex items-center p-2 md:p-0 md:pb-4 gap-2">
       <Input
         id="other-language-search"
         :disabled="isLoading"
@@ -213,32 +213,40 @@ onUnmounted(() => {
   .pagination {
     flex-wrap: wrap;
     justify-content: center;
-    gap: 5px;
   }
-
-  /* Top row */
   :deep(.btn-prev) {
+    margin-left: 0 !important;
     order: 1;
+    margin-top: 5px;
   }
   :deep(.el-pager) {
     order: 2;
+    margin-top: 5px;
   }
   :deep(.btn-next) {
     order: 3;
+    margin-top: 5px;
   }
-
-  /* Bottom row */
-  :deep(.el-pagination__total) {
+  /* weird line break hack */
+  .pagination::before {
+    content: '';
+    flex-basis: 100%;
     order: 4;
-    margin-inline: 5px !important;
   }
-  :deep(.el-pagination__sizes) {
+  :deep(.el-pagination__total) {
     order: 5;
     margin-inline: 5px !important;
+    margin-top: 5px;
   }
-  :deep(.el-pagination__jump) {
+  :deep(.el-pagination__sizes) {
     order: 6;
     margin-inline: 5px !important;
+    margin-top: 5px;
+  }
+  :deep(.el-pagination__jump) {
+    order: 7;
+    margin-inline: 5px !important;
+    margin-top: 5px;
   }
 }
 </style>
