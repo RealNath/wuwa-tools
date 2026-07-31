@@ -6,7 +6,7 @@ const RAW_URL = 'https://raw.githubusercontent.com/Arikatsu/WutheringWaves_Data/
 
 const LANGUAGES = ['de', 'en', 'es', 'fr', 'ja', 'ko', 'pt', 'th', 'zh-Hans', 'zh-Hant']
 
-async function fetchJson(url: string) {
+async function fetchJson(url: string): Promise<any> {
   console.log(`Fetching ${url}...`)
   const headers: Record<string, string> = { 'User-Agent': 'Node.js' }
   if (process.env.GITHUB_TOKEN) {
@@ -185,7 +185,7 @@ async function optimizePlotHandbook(version: string, outDir: string) {
 async function main() {
   console.log('Fetching latest version...')
   const versionRes = await fetch(REPO_URL)
-  const versionData = await versionRes.json()
+  const versionData: any = await versionRes.json()
   const version = versionData.default_branch
   console.log(`Latest version: ${version}`)
 
