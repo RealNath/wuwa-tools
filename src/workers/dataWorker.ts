@@ -1,6 +1,7 @@
 import { handleFetchData } from '@/workers/commands/fetchDataCommand'
 import { handleGetOtherLanguage, handleGetOtherLanguageById } from '@/workers/commands/getOtherLanguageCommand'
 import { handleExtractDialogue } from '@/workers/commands/extractDialogueCommand'
+import { handleSortData } from '@/workers/commands/sortDataCommand'
 
 self.onmessage = async (event) => {
   const command = event.data.command
@@ -14,6 +15,8 @@ self.onmessage = async (event) => {
       await handleGetOtherLanguageById(event.data)
     } else if (command === 'extract_dialogue') {
       await handleExtractDialogue(event.data)
+    } else if (command === 'sort_data') {
+      await handleSortData(event.data)
     } else {
       console.warn(`Unknown command: ${command}`)
     }
