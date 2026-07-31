@@ -8,7 +8,7 @@ export async function handleFetchData(eventData: any) {
     const items = Object.entries(dict).map(([id, content]) => ({ Id: id, Content: content }))
     self.postMessage({
       status: 'success',
-      data: items.slice(0, limit),
+      data: limit ? items.slice(0, limit) : items,
     })
   } else {
     const data = await fetchData(dataType, lang)
@@ -18,7 +18,7 @@ export async function handleFetchData(eventData: any) {
       : Object.entries(data).map(([k, v]) => ({ Id: k, Content: JSON.stringify(v) }))
     self.postMessage({
       status: 'success',
-      data: items.slice(0, limit),
+      data: limit ? items.slice(0, limit) : items,
     })
   }
 }

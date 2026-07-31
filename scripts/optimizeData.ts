@@ -34,6 +34,7 @@ function getChunkId(chunk_count: number, id: string): string {
 }
 
 async function optimizeMultiText(version: string, outDir: string) {
+  // {lang: {Id:Content, Id:Content, ...}, lang: {Id:Content, ...}, ...}
   const allDicts: Record<string, Record<string, string>> = {}
 
   await Promise.all(

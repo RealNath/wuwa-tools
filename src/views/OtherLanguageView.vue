@@ -131,7 +131,7 @@ onUnmounted(() => {
     <div v-if="isLoading">Loading data...</div>
     <div v-else-if="errorMessage">Error: {{ errorMessage }}</div>
     <ul v-else>
-      <li v-for="item in items" :key="item.id">
+      <li class="li-elemt" v-for="item in items" :key="item.id">
         <details @toggle="getOtherLanguageById($event, item)">
           <summary>ID: {{ item.id }}</summary>
           <pre>{{ item.wikiText }}</pre>
