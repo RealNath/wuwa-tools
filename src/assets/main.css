@@ -49,7 +49,7 @@ ul {
 
 @media (max-width: 1024px) {
   #app {
-    padding: 2rem 1.5rem;
+    padding: 2rem 0.75rem;
   }
 }
 

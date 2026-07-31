@@ -148,7 +148,6 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <h1 class="text-3xl font-bold pb-4">MultiText Viewer</h1>
   <div class="border rounded-md bg-card text-card-foreground shadow-sm p-4 space-y-4">
     <div class="flex items-center pb-4 gap-2">
       <Input
@@ -184,8 +183,8 @@ onUnmounted(() => {
       style="width: 100%"
       @sort-change="handleSortChange"
     >
-      <el-table-column prop="Id" label="Id" sortable="custom" width="250" />
-      <el-table-column prop="Content" label="Content" sortable="custom" />
+      <el-table-column prop="Id" label="Id" sortable="custom" min-width="120" />
+      <el-table-column prop="Content" label="Content" sortable="custom" min-width="200" />
       <template #empty>
         <div v-if="!isLoading">No results found.</div>
         <div v-else>Loading text data...</div>
@@ -196,12 +195,50 @@ onUnmounted(() => {
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
+        :pager-count="6"
         :page-sizes="[10, 25, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
         :total="filteredItems.length"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
+        class="pagination"
       />
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Responsive Pagination for Mobile */
+@media (max-width: 768px) {
+  .pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  /* Top row */
+  :deep(.btn-prev) {
+    order: 1;
+  }
+  :deep(.el-pager) {
+    order: 2;
+  }
+  :deep(.btn-next) {
+    order: 3;
+  }
+
+  /* Bottom row */
+  :deep(.el-pagination__total) {
+    order: 4;
+    margin-inline: 5px !important;
+  }
+  :deep(.el-pagination__sizes) {
+    order: 5;
+    margin-inline: 5px !important;
+  }
+  :deep(.el-pagination__jump) {
+    order: 6;
+    margin-inline: 5px !important;
+  }
+}
+</style>

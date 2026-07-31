@@ -39,6 +39,7 @@ const isLoading = ref(true)
 </script>
 
 <template>
+  <h1 class="text-3xl font-bold pb-4">MultiText Viewer</h1>
   <MultiTextTable />
 </template>
 
