@@ -1,7 +1,7 @@
 import { get, set } from 'idb-keyval'
 
 export async function fetchData(
-  type: 'multitext' | 'plothandbook',
+  type: 'multitext' | 'plothandbook' | 'questnodedata',
   lang?: string,
   version: string = Date.now().toString(),
 ) {
@@ -16,6 +16,8 @@ export async function fetchData(
     url = `${baseUrl}/multitext/multitext_${lang || 'en'}.json`
   } else if (type === 'plothandbook') {
     url = `${baseUrl}/plothandbook.json`
+  } else if (type === 'questnodedata') {
+    url = `${baseUrl}/questnodedata.json`
   } else {
     throw new Error(`Unsupported type: ${type}`)
   }

@@ -140,7 +140,7 @@ async function optimizeFlowState(version: string, outDir: string) {
     }
     console.log(`Saved ${Object.keys(chunksData).length} chunk files to flowstate_chunks/`)
   } catch (e) {
-    console.log(e)
+    console.warn(e)
   }
 }
 
@@ -150,7 +150,8 @@ async function optimizePlotHandbook(version: string, outDir: string) {
     const data = await fetchJson(url)
 
     // strip down plothandbook
-    const optimized = data.map((item: any) => {
+    // convert list of dict to dict (key: QuestId, value: value of parsedData)
+    const optimized = data.reduce((acc: any, item: any) => {
       let parsedData = []
       try {
         if (item.Data) {
@@ -165,20 +166,38 @@ async function optimizePlotHandbook(version: string, outDir: string) {
           }))
         }
       } catch (e) {
-        console.log(e)
+        console.warn(e)
       }
 
-      return {
-        QuestId: item.QuestId,
-        Data: parsedData,
-      }
-    })
+      acc[item.QuestId] = parsedData
+      return acc
+    }, {})
 
     const outFile = path.join(outDir, 'plothandbook.json')
     fs.writeFileSync(outFile, JSON.stringify(optimized))
     console.log(`Saved ${outFile}`)
   } catch (e) {
     console.warn(`Failed to process PlotHandbook:`, e)
+  }
+}
+
+async function optimizeQuestNodeData(version: string, outDir: string) {
+  const url = `${RAW_URL}/${version}/BinData/QuestNodeData/questnodedata.json`
+
+  // convert list of dict to dict (key: Key, value: value of Data key)
+  try {
+    const data = await fetchJson(url)
+    const optimized = data.reduce((acc: any, currentItem: any) => {
+      const { Key, Data } = currentItem
+      acc[Key] = Data
+      return acc
+    }, {})
+
+    const outFile = path.join(outDir, 'questnodedata.json')
+    fs.writeFileSync(outFile, JSON.stringify(optimized))
+    console.log(`Saved ${outFile}`)
+  } catch (e) {
+    console.warn('Failed to process QuestNodeData: ', e)
   }
 }
 
@@ -197,6 +216,7 @@ async function main() {
     optimizePlotHandbook(version, outDir),
     optimizeFlowState(version, outDir),
     optimizeMultiText(version, outDir),
+    optimizeQuestNodeData(version, outDir),
   ])
 
   console.log('All data optimized successfully!')

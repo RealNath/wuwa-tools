@@ -1,5 +1,5 @@
 import { fetchData, fetchMultiTextDict, fetchFlowstateData } from '@/workers/dataFetcher'
-import { getTalkFlowLines } from '@/workers/dialogueExtractor'
+import { getTalkFlowLines, getNodeSequence } from '@/workers/dialogueExtractor'
 
 export async function handleExtractDialogue(eventData: any) {
   const { questId, lang } = eventData
@@ -7,40 +7,45 @@ export async function handleExtractDialogue(eventData: any) {
   // fetch PlotHandbook
   const plothbData = await fetchData('plothandbook')
 
-  let parsedData = null
-  for (const item of plothbData) {
-    if (item.QuestId === questId) {
-      parsedData = item.Data
-      break
-    }
-  }
-
-  if (!parsedData) {
-    throw new Error(`QuestId ${questId} not found in plothandbookconfig.json`)
-  }
-
-  const stateKeys: string[] = []
+  let parsedData = plothbData[questId]
+  let stateKeys: string[] = []
   const flowListNames = new Set<string>()
-  const stateKeyTips: Record<string, string> = {}
-  let currentTip = ''
+  let stateKeyTips: Record<string, string> = {}
 
-  for (const item of parsedData) {
-    const tidTip = item.TidTip || ''
-    if (tidTip) {
-      currentTip = tidTip
+  if (parsedData) {
+    let currentTip = ''
+    for (const item of parsedData) {
+      const tidTip = item.TidTip || ''
+      if (tidTip) {
+        currentTip = tidTip
+      }
+
+      const flow = item.Flow || {}
+      const flowListName = flow.FlowListName || ''
+      const flowId = flow.FlowId || 0
+      const stateId = flow.StateId || 0
+
+      if (!flowListName) continue
+
+      const stateKey = `${flowListName}_${flowId}_${stateId}`
+      stateKeys.push(stateKey)
+      flowListNames.add(flowListName)
+      stateKeyTips[stateKey] = currentTip
     }
+  } else {
+    console.log(`QuestId ${questId} not found in plothandbookconfig.json. Falling back to questnodedata.json...`)
+    const questNodeData = await fetchData('questnodedata')
+    const sequence = getNodeSequence(questId, questNodeData)
+    stateKeys = sequence.stateKeys
+    stateKeyTips = sequence.stateKeyTips
 
-    const flow = item.Flow || {}
-    const flowListName = flow.FlowListName || ''
-    const flowId = flow.FlowId || 0
-    const stateId = flow.StateId || 0
-
-    if (!flowListName) continue
-
-    const stateKey = `${flowListName}_${flowId}_${stateId}`
-    stateKeys.push(stateKey)
-    flowListNames.add(flowListName)
-    stateKeyTips[stateKey] = currentTip
+    for (const key of stateKeys) {
+      const parts = key.split('_')
+      const flowListName = parts.slice(0, -2).join('_')
+      if (flowListName) {
+        flowListNames.add(flowListName)
+      }
+    }
   }
 
   if (stateKeys.length === 0) {

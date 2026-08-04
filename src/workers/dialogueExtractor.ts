@@ -202,3 +202,92 @@ export function getTalkFlowLines(parsedData: any[], multitextDict: Record<string
 
   return outputLines
 }
+
+export function getNodeSequence(questId: number, questNodeData: Record<string, any>): { stateKeys: string[], stateKeyTips: Record<string, string> } {
+  const nodes: Record<number, any> = {}
+
+  for (const [key, nodeData] of Object.entries(questNodeData)) {
+    if (key.startsWith(`${questId}_`)) {
+      const nodeId = nodeData.Id
+      if (nodeId !== undefined && nodeId !== null) {
+        nodes[nodeId] = nodeData
+      }
+    }
+  }
+
+  if (Object.keys(nodes).length === 0) {
+    return { stateKeys: [], stateKeyTips: {} }
+  }
+
+  let rootNodes = Object.values(nodes).filter((n: any) => n.ParentNodeId === 0)
+  if (rootNodes.length === 0) {
+    // Fallback: find nodes whose parent doesn't exist in this quest's nodes
+    rootNodes = Object.values(nodes).filter((n: any) => !(n.ParentNodeId in nodes))
+  }
+
+  const childrenMap: Record<number, number[]> = {}
+  for (const [nodeIdStr, node] of Object.entries(nodes)) {
+    const nodeId = Number(nodeIdStr)
+    const parentId = node.ParentNodeId
+    if (parentId !== undefined && parentId !== null) {
+      if (!childrenMap[parentId]) {
+        childrenMap[parentId] = []
+      }
+      childrenMap[parentId].push(nodeId)
+    }
+  }
+
+  const stateKeys: string[] = []
+  const stateKeyTips: Record<string, string> = {}
+  const visited = new Set<number>()
+
+  function extractPlayFlowStates(obj: any, currentTip: string) {
+    if (obj !== null && typeof obj === 'object' && !Array.isArray(obj)) {
+      const flowList = obj.FlowListName
+      const flowId = obj.FlowId
+      const stateId = obj.StateId
+
+      if (flowList && flowId !== undefined && flowId !== null && stateId !== undefined && stateId !== null) {
+        const stateKey = `${flowList}_${flowId}_${stateId}`
+        if (!stateKeys.includes(stateKey)) {
+          stateKeys.push(stateKey)
+          stateKeyTips[stateKey] = currentTip
+        }
+      }
+
+      for (const value of Object.values(obj)) {
+        extractPlayFlowStates(value, currentTip)
+      }
+    } else if (Array.isArray(obj)) {
+      for (const item of obj) {
+        extractPlayFlowStates(item, currentTip)
+      }
+    }
+  }
+
+  function traverse(nodeId: number, currentTip: string) {
+    if (visited.has(nodeId)) return
+    visited.add(nodeId)
+
+    const node = nodes[nodeId]
+    if (!node) return
+
+    const tidTip = node.TidTip || ''
+    if (tidTip) {
+      currentTip = tidTip
+    }
+
+    extractPlayFlowStates(node, currentTip)
+
+    const children = childrenMap[nodeId] || []
+    for (const childId of children) {
+      traverse(childId, currentTip)
+    }
+  }
+
+  for (const root of rootNodes) {
+    traverse(root.Id, '')
+  }
+
+  return { stateKeys, stateKeyTips }
+}
