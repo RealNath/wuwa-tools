@@ -148,11 +148,13 @@ export function getTalkFlowLines(parsedData: any[], multitextDict: Record<string
 
         const tidTalk = item.TidTalk
         const whoId = item.WhoId
+        const itemType = item.Type
         if (tidTalk) {
-          const characterName = multitextDict[`Speaker_${whoId}_Name`] || whoId?.toString() || ""
+          const characterName = whoId !== undefined && whoId !== null ? (multitextDict[`Speaker_${whoId}_Name`] || whoId?.toString()) : ""
           const dialogue = multitextDict[tidTalk] || tidTalk
 
-          const formattedDialogue = formatDialogue(characterName, dialogue, "_", multitextDict)
+          const prefix = itemType === "CenterText" ? "center" : "_"
+          const formattedDialogue = formatDialogue(characterName, dialogue, prefix, multitextDict)
           outputLines.push(`${indent}${formattedDialogue}`)
         }
 

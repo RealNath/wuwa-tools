@@ -7,6 +7,9 @@ export function formatDialogue(
   let line = ''
   if (prefix === 'dicon') {
     line = `{{DIcon}} ${dialogue}`
+  } else if (prefix === 'center') {
+    line = `'''${dialogue}'''`
+    line = line.replace(/\{PlayerName\}/g, "{{Rover}}")
   } else {
     line = `'''${characterName}:''' ${dialogue}`
     line = line.replace(/\{PlayerName\}/g, '{{Rover}}')
