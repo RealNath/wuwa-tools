@@ -161,7 +161,7 @@ onUnmounted(() => {
       </Input>
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
-          <Button variant="outline" class="px-5">{{ position }}</Button>
+          <Button variant="outline" class="px-4">{{ position }}</Button>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent>

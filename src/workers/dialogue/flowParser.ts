@@ -1,7 +1,10 @@
 import { formatDialogue } from './formatting'
 
-export function getTalkFlowLines(parsedData: any[], multitextDict: Record<string, string>): string[] {
-  const showTalks = parsedData.filter((item: any) => item.Name === "ShowTalk")
+export function getTalkFlowLines(
+  parsedData: any[],
+  multitextDict: Record<string, string>,
+): string[] {
+  const showTalks = parsedData.filter((item: any) => item.Name === 'ShowTalk')
   if (showTalks.length === 0) return []
 
   const outputLines: string[] = []
@@ -22,16 +25,16 @@ export function getTalkFlowLines(parsedData: any[], multitextDict: Record<string
       }
 
       for (const item of talkItemsList) {
-        for (const opt of (item.Options || [])) {
-          for (const action of (opt.Actions || [])) {
-            if (action.Name === "JumpTalk") {
+        for (const opt of item.Options || []) {
+          for (const action of opt.Actions || []) {
+            if (action.Name === 'JumpTalk') {
               const tId = action.Params?.TalkId
               if (tId !== undefined) entryPoints.add(tId)
             }
           }
         }
-        for (const action of (item.Actions || [])) {
-          if (action.Name === "JumpTalk") {
+        for (const action of item.Actions || []) {
+          if (action.Name === 'JumpTalk') {
             const tId = action.Params?.TalkId
             if (tId !== undefined) entryPoints.add(tId)
           }
@@ -54,8 +57,8 @@ export function getTalkFlowLines(parsedData: any[], multitextDict: Record<string
         if (item.Options && item.Options.length > 0) {
           endsSequence = true
         } else {
-          for (const action of (item.Actions || [])) {
-            if (action.Name === "JumpTalk" || action.Name === "FinishTalk") {
+          for (const action of item.Actions || []) {
+            if (action.Name === 'JumpTalk' || action.Name === 'FinishTalk') {
               endsSequence = true
               break
             }
@@ -102,22 +105,26 @@ export function getTalkFlowLines(parsedData: any[], multitextDict: Record<string
         const lastId = bSeq[bSeq.length - 1]
         const lastItem = lastId !== undefined ? talkItems[lastId] : undefined
         if (lastItem) {
-          for (const action of (lastItem.Actions || [])) {
-            if (action.Name === "JumpTalk") {
+          for (const action of lastItem.Actions || []) {
+            if (action.Name === 'JumpTalk') {
               const targetTalkId = action.Params?.TalkId
-              return talkIdToSeqIdx[targetTalkId] !== undefined ? talkIdToSeqIdx[targetTalkId] : null
-            } else if (action.Name === "FinishTalk") {
+              return talkIdToSeqIdx[targetTalkId] !== undefined
+                ? talkIdToSeqIdx[targetTalkId]
+                : null
+            } else if (action.Name === 'FinishTalk') {
               return null
             }
           }
 
           const options = lastItem.Options || []
           if (options.length === 1) {
-            for (const action of (options[0].Actions || [])) {
-              if (action.Name === "JumpTalk") {
+            for (const action of options[0].Actions || []) {
+              if (action.Name === 'JumpTalk') {
                 const targetTalkId = action.Params?.TalkId
-                return talkIdToSeqIdx[targetTalkId] !== undefined ? talkIdToSeqIdx[targetTalkId] : null
-              } else if (action.Name === "FinishTalk") {
+                return talkIdToSeqIdx[targetTalkId] !== undefined
+                  ? talkIdToSeqIdx[targetTalkId]
+                  : null
+              } else if (action.Name === 'FinishTalk') {
                 return null
               }
             }
@@ -135,12 +142,12 @@ export function getTalkFlowLines(parsedData: any[], multitextDict: Record<string
 
       const seq = talkSequence[seqIdx]
       if (!seq) return
-      const indent = ":".repeat(indentLevel)
+      const indent = ':'.repeat(indentLevel)
 
       const transitions = seqTransitions[seqIdx.toString()] || []
 
       let hasBranchingOptions = false
-      let optionsToBranch: {opt: any, branchSeqIdx: number | null}[] = []
+      let optionsToBranch: { opt: any; branchSeqIdx: number | null }[] = []
 
       for (const talkId of seq) {
         const item = talkItems[talkId]
@@ -150,10 +157,13 @@ export function getTalkFlowLines(parsedData: any[], multitextDict: Record<string
         const whoId = item.WhoId
         const itemType = item.Type
         if (tidTalk) {
-          const characterName = whoId !== undefined && whoId !== null ? (multitextDict[`Speaker_${whoId}_Name`] || whoId?.toString()) : ""
+          const characterName =
+            whoId !== undefined && whoId !== null
+              ? multitextDict[`Speaker_${whoId}_Name`] || whoId?.toString()
+              : ''
           const dialogue = multitextDict[tidTalk] || tidTalk
 
-          const prefix = itemType === "CenterText" ? "center" : "_"
+          const prefix = itemType === 'CenterText' ? 'center' : '_'
           const formattedDialogue = formatDialogue(characterName, dialogue, prefix, multitextDict)
           outputLines.push(`${indent}${formattedDialogue}`)
         }
@@ -168,7 +178,8 @@ export function getTalkFlowLines(parsedData: any[], multitextDict: Record<string
 
             for (const trans of transitions) {
               if (trans.OptionTextKey === opt.PlotLineKey || trans.OptionTextKey === optTid) {
-                branchSeqIdx = trans.NextSequenceIndex !== undefined ? trans.NextSequenceIndex : null
+                branchSeqIdx =
+                  trans.NextSequenceIndex !== undefined ? trans.NextSequenceIndex : null
                 break
               }
             }
@@ -176,7 +187,7 @@ export function getTalkFlowLines(parsedData: any[], multitextDict: Record<string
             if (branchSeqIdx === null) {
               if (opt.Actions) {
                 for (const action of opt.Actions) {
-                  if (action.Name === "JumpTalk") {
+                  if (action.Name === 'JumpTalk') {
                     const tId = action.Params?.TalkId
                     branchSeqIdx = talkIdToSeqIdx[tId] !== undefined ? talkIdToSeqIdx[tId] : null
                     break
@@ -189,14 +200,17 @@ export function getTalkFlowLines(parsedData: any[], multitextDict: Record<string
 
           if (branchTargets.some((bt: any) => bt !== null)) {
             hasBranchingOptions = true
-            optionsToBranch = options.map((opt: any, i: number) => ({ opt, branchSeqIdx: branchTargets[i] }))
+            optionsToBranch = options.map((opt: any, i: number) => ({
+              opt,
+              branchSeqIdx: branchTargets[i],
+            }))
             break
           } else {
             for (const opt of options) {
               const optTid = opt.TidTalkOption
               if (optTid) {
                 const translatedOpt = multitextDict[optTid] || optTid
-                const dialogueLine = formatDialogue("_", translatedOpt, "dicon", multitextDict)
+                const dialogueLine = formatDialogue('_', translatedOpt, 'dicon', multitextDict)
                 outputLines.push(`${indent}${dialogueLine}`)
               }
             }
@@ -207,11 +221,11 @@ export function getTalkFlowLines(parsedData: any[], multitextDict: Record<string
       if (hasBranchingOptions) {
         const nextSeqs = new Set<number>()
 
-        for (const {opt, branchSeqIdx} of optionsToBranch) {
+        for (const { opt, branchSeqIdx } of optionsToBranch) {
           const optTid = opt.TidTalkOption
           if (optTid) {
             const translatedOpt = multitextDict[optTid] || optTid
-            const dialogueLine = formatDialogue("_", translatedOpt, "dicon", multitextDict)
+            const dialogueLine = formatDialogue('_', translatedOpt, 'dicon', multitextDict)
             outputLines.push(`${indent}${dialogueLine}`)
           }
 
@@ -256,7 +270,10 @@ export function getTalkFlowLines(parsedData: any[], multitextDict: Record<string
   return outputLines
 }
 
-export function getNodeSequence(questId: number, questNodeData: Record<string, any>): { stateKeys: string[], stateKeyTips: Record<string, string> } {
+export function getNodeSequence(
+  questId: number,
+  questNodeData: Record<string, any>,
+): { stateKeys: string[]; stateKeyTips: Record<string, string> } {
   const nodes: Record<number, any> = {}
 
   for (const [key, nodeData] of Object.entries(questNodeData)) {
@@ -300,7 +317,13 @@ export function getNodeSequence(questId: number, questNodeData: Record<string, a
       const flowId = obj.FlowId
       const stateId = obj.StateId
 
-      if (flowList && flowId !== undefined && flowId !== null && stateId !== undefined && stateId !== null) {
+      if (
+        flowList &&
+        flowId !== undefined &&
+        flowId !== null &&
+        stateId !== undefined &&
+        stateId !== null
+      ) {
         const stateKey = `${flowList}_${flowId}_${stateId}`
         if (!stateKeys.includes(stateKey)) {
           stateKeys.push(stateKey)

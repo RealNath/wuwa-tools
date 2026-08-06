@@ -18,7 +18,8 @@
 }
 
 a,
-.title {
+.title,
+.notice {
   text-decoration: none;
   color: #a2bfee;
   margin: 0;

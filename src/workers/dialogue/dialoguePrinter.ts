@@ -4,7 +4,8 @@ export function printDialogues(
   stateKeys: string[],
   stateKeyTips: Record<string, string>,
   flowstateData: Record<string, any>,
-  multitextDict: Record<string, string>
+  multitextDict: Record<string, string>,
+  options: { showStateKeys: boolean, showMissingDialogue: boolean }
 ): string[] {
   let firstPrint = true
   let lastPrintedTip = ''
@@ -19,6 +20,10 @@ export function printDialogues(
       if (lines && lines.length > 0) {
         if (!firstPrint) {
           finalOutput.push('----')
+        }
+
+        if (options.showStateKeys) {
+          finalOutput.push(`;StateKey: ${stateKey}`)
         }
 
         const tipKey = stateKeyTips[stateKey] || ''
