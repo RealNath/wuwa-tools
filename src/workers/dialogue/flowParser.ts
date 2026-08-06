@@ -16,7 +16,62 @@ export function getTalkFlowLines(parsedData: any[], multitextDict: Record<string
 
     let talkSequence: number[][] = params.TalkSequence || []
     if (talkSequence.length === 0 && talkItemsList.length > 0) {
-      talkSequence = [talkItemsList.map((item: any) => item.Id)]
+      const entryPoints = new Set<number>()
+      if (talkItemsList[0]?.Id !== undefined) {
+        entryPoints.add(talkItemsList[0].Id)
+      }
+
+      for (const item of talkItemsList) {
+        for (const opt of (item.Options || [])) {
+          for (const action of (opt.Actions || [])) {
+            if (action.Name === "JumpTalk") {
+              const tId = action.Params?.TalkId
+              if (tId !== undefined) entryPoints.add(tId)
+            }
+          }
+        }
+        for (const action of (item.Actions || [])) {
+          if (action.Name === "JumpTalk") {
+            const tId = action.Params?.TalkId
+            if (tId !== undefined) entryPoints.add(tId)
+          }
+        }
+      }
+
+      const builtSequences: number[][] = []
+      let currentSeq: number[] = []
+
+      for (const item of talkItemsList) {
+        const itemId = item.Id
+        if (entryPoints.has(itemId) && currentSeq.length > 0) {
+          builtSequences.push(currentSeq)
+          currentSeq = []
+        }
+
+        currentSeq.push(itemId)
+        let endsSequence = false
+
+        if (item.Options && item.Options.length > 0) {
+          endsSequence = true
+        } else {
+          for (const action of (item.Actions || [])) {
+            if (action.Name === "JumpTalk" || action.Name === "FinishTalk") {
+              endsSequence = true
+              break
+            }
+          }
+        }
+
+        if (endsSequence) {
+          builtSequences.push(currentSeq)
+          currentSeq = []
+        }
+      }
+
+      if (currentSeq.length > 0) {
+        builtSequences.push(currentSeq)
+      }
+      talkSequence = builtSequences
     }
 
     const seqTransitions = params.SequenceTransitions || {}
@@ -46,12 +101,28 @@ export function getTalkFlowLines(parsedData: any[], multitextDict: Record<string
       if (bSeq && bSeq.length > 0) {
         const lastId = bSeq[bSeq.length - 1]
         const lastItem = lastId !== undefined ? talkItems[lastId] : undefined
-        if (lastItem && lastItem.Actions) {
-          for (const action of lastItem.Actions) {
+        if (lastItem) {
+          for (const action of (lastItem.Actions || [])) {
             if (action.Name === "JumpTalk") {
               const targetTalkId = action.Params?.TalkId
               return talkIdToSeqIdx[targetTalkId] !== undefined ? talkIdToSeqIdx[targetTalkId] : null
+            } else if (action.Name === "FinishTalk") {
+              return null
             }
+          }
+
+          const options = lastItem.Options || []
+          if (options.length === 1) {
+            for (const action of (options[0].Actions || [])) {
+              if (action.Name === "JumpTalk") {
+                const targetTalkId = action.Params?.TalkId
+                return talkIdToSeqIdx[targetTalkId] !== undefined ? talkIdToSeqIdx[targetTalkId] : null
+              } else if (action.Name === "FinishTalk") {
+                return null
+              }
+            }
+          } else if (options.length > 1) {
+            return null
           }
         }
       }
