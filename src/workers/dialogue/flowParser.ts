@@ -9,9 +9,16 @@ export function getTalkFlowLines(
 
   const outputLines: string[] = []
 
+  const phoneMode = parsedData.some(
+    (action: any) => action.Name === 'SetPlotMode' && action.Params?.Mode === 'PhoneMessage'
+  )
+
   for (const showTalk of showTalks) {
     const params = showTalk.Params || {}
     const talkItemsList = params.TalkItems || []
+    const isPhone = phoneMode || talkItemsList.some((item: any) => item.Type === 'PhoneMessage')
+    const talkOutput: string[] = []
+
     const talkItems: Record<number, any> = {}
     for (const item of talkItemsList) {
       talkItems[item.Id] = item
@@ -164,8 +171,8 @@ export function getTalkFlowLines(
           const dialogue = multitextDict[tidTalk] || tidTalk
 
           const prefix = itemType === 'CenterText' ? 'center' : '_'
-          const formattedDialogue = formatDialogue(characterName, dialogue, prefix, multitextDict)
-          outputLines.push(`${indent}${formattedDialogue}`)
+          const formattedDialogue = formatDialogue(characterName, dialogue, prefix, multitextDict, isPhone)
+          talkOutput.push(`${indent}${formattedDialogue}`)
         }
 
         if (item.Options && item.Options.length > 0) {
@@ -210,8 +217,8 @@ export function getTalkFlowLines(
               const optTid = opt.TidTalkOption
               if (optTid) {
                 const translatedOpt = multitextDict[optTid] || optTid
-                const dialogueLine = formatDialogue('_', translatedOpt, 'dicon', multitextDict)
-                outputLines.push(`${indent}${dialogueLine}`)
+                const dialogueLine = formatDialogue('_', translatedOpt, 'dicon', multitextDict, isPhone)
+                talkOutput.push(`${indent}${dialogueLine}`)
               }
             }
           }
@@ -225,8 +232,8 @@ export function getTalkFlowLines(
           const optTid = opt.TidTalkOption
           if (optTid) {
             const translatedOpt = multitextDict[optTid] || optTid
-            const dialogueLine = formatDialogue('_', translatedOpt, 'dicon', multitextDict)
-            outputLines.push(`${indent}${dialogueLine}`)
+            const dialogueLine = formatDialogue('_', translatedOpt, 'dicon', multitextDict, isPhone)
+            talkOutput.push(`${indent}${dialogueLine}`)
           }
 
           if (branchSeqIdx !== null) {
@@ -265,6 +272,13 @@ export function getTalkFlowLines(
     }
 
     traverse(0, 1, new Set())
+
+    if (isPhone && talkOutput.length > 0) {
+      talkOutput[0] = '{{WavesLine|text = ' + talkOutput[0]!.trimStart()
+      talkOutput[talkOutput.length - 1] = talkOutput[talkOutput.length - 1]! + '}}'
+    }
+
+    outputLines.push(...talkOutput)
   }
 
   return outputLines

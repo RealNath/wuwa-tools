@@ -22,7 +22,7 @@ import DataWorker from '../workers/dataWorker?worker'
 
 const searchQuery = ref<string>('')
 const showStateKeys = ref<boolean>(false)
-const showMissingDialogue = ref<boolean>(false)
+const showMissingDialogue = ref<boolean>(true)
 
 const items = ref<any[]>([])
 const errorMessage = ref<string>('')
@@ -103,17 +103,24 @@ onUnmounted(() => {
 
     <div v-if="isLoading">Loading data...</div>
     <div v-else-if="errorMessage">Error: {{ errorMessage }}</div>
-    <div
-      v-else
-      v-for="(item, index) in items"
-      :key="index"
-      :class="[
-        'min-h-6 whitespace-pre-wrap',
-        item?.type === 'missing-dialogue' ? 'notice font-bold' : '',
-      ]"
-    >
-      {{ item?.type ? item.content : item }}
+    <div v-else-if="items.length === 0" class="text-muted-foreground mt-4">
+      Input a QuestId and press Enter to generate the dialogue.<br />
+      <br />
+      Do note that Show Missing Dialogue is enabled by default and may not be 100% accurate. Manual
+      adjustments needed later.
     </div>
+    <template v-else>
+      <div
+        v-for="(item, index) in items"
+        :key="index"
+        :class="[
+          'min-h-6 whitespace-pre-wrap',
+          item?.type === 'missing-dialogue' ? 'notice font-bold' : '',
+        ]"
+      >
+        {{ item?.type ? item.content : item }}
+      </div>
+    </template>
   </div>
 </template>
 

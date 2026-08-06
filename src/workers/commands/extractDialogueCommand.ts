@@ -1,5 +1,5 @@
 import { fetchData, fetchMultiTextDict, fetchFlowstateData } from '@/workers/dataFetcher'
-import { getQuestStateKeys } from '@/workers/dialogue/questProcessor'
+import { getQuestStateKeys, interleaveMissingKeys } from '@/workers/dialogue/questProcessor'
 import { printDialogues } from '@/workers/dialogue/dialoguePrinter'
 
 export async function handleExtractDialogue(eventData: any) {
@@ -22,13 +22,8 @@ export async function handleExtractDialogue(eventData: any) {
 
   const options = eventData.options
 
-  let finalOutput: any[] = printDialogues(
-    stateKeys,
-    stateKeyTips,
-    flowstateData,
-    multitextDict,
-    options,
-  )
+  let finalKeys = stateKeys
+  let unplacedKeys: string[] = []
 
   if (options.showMissingDialogue) {
     const missingKeys: string[] = []
@@ -45,23 +40,35 @@ export async function handleExtractDialogue(eventData: any) {
       }
     }
 
-    if (missingKeys.length > 0) {
-      finalOutput.push('')
-      finalOutput.push('')
-      finalOutput.push({
-        type: 'missing-dialogue',
-        content: '==================================================',
-      })
-      finalOutput.push({ type: 'missing-dialogue', content: 'MISSING FROM EXTRACTED DATA' })
-      finalOutput.push({
-        type: 'missing-dialogue',
-        content: '==================================================',
-      })
-      finalOutput.push('')
+    const interleaved = interleaveMissingKeys(stateKeys, missingKeys)
+    finalKeys = interleaved.stateKeysList
+    unplacedKeys = interleaved.unplacedKeys
+  }
 
-      const missingOutput = printDialogues(missingKeys, {}, flowstateData, multitextDict, options)
-      finalOutput = finalOutput.concat(missingOutput)
-    }
+  let finalOutput: any[] = printDialogues(
+    finalKeys,
+    stateKeyTips,
+    flowstateData,
+    multitextDict,
+    options,
+  )
+
+  if (options.showMissingDialogue && unplacedKeys.length > 0) {
+    finalOutput.push('')
+    finalOutput.push('')
+    finalOutput.push({
+      type: 'missing-dialogue',
+      content: '====================================================================================================',
+    })
+    finalOutput.push({ type: 'missing-dialogue', content: 'MISSING FROM EXTRACTED DATA (Potentially different QuestId or unrelated to the quest)' })
+    finalOutput.push({
+      type: 'missing-dialogue',
+      content: '====================================================================================================',
+    })
+    finalOutput.push('')
+
+    const missingOutput = printDialogues(unplacedKeys, {}, flowstateData, multitextDict, options)
+    finalOutput = finalOutput.concat(missingOutput)
   }
 
   self.postMessage({

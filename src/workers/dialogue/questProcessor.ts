@@ -45,3 +45,58 @@ export async function getQuestStateKeys(questId: number, plothbData: any): Promi
 
   return { stateKeys, stateKeyTips, flowListNames }
 }
+
+export function interleaveMissingKeys(stateKeys: string[], missingStateKeys: string[]): { stateKeysList: string[], unplacedKeys: string[] } {
+  const stateKeysList = [...stateKeys]
+  const unplacedKeys: string[] = []
+  
+  for (const mk of missingStateKeys) {
+    const parts = mk.split('_')
+    if (parts.length < 3) {
+      unplacedKeys.push(mk)
+      continue
+    }
+    
+    const mStateId = parseInt(parts[parts.length - 1]!, 10)
+    const mFlowId = parts[parts.length - 2]!
+    const mFlowListName = parts.slice(0, -2).join('_')
+    
+    if (isNaN(mStateId)) {
+      unplacedKeys.push(mk)
+      continue
+    }
+    
+    let bestIdx = stateKeysList.length
+    let foundSpot = false
+    
+    for (let i = 0; i < stateKeysList.length; i++) {
+      const sk = stateKeysList[i]!
+      const sParts = sk.split('_')
+      if (sParts.length < 3) continue
+      
+      const sStateId = parseInt(sParts[sParts.length - 1]!, 10)
+      const sFlowId = sParts[sParts.length - 2]!
+      const sFlowListName = sParts.slice(0, -2).join('_')
+      
+      if (isNaN(sStateId)) continue
+      
+      if (sFlowListName === mFlowListName && sFlowId === mFlowId) {
+        foundSpot = true
+        if (sStateId > mStateId) {
+          bestIdx = i
+          break
+        } else {
+          bestIdx = i + 1
+        }
+      }
+    }
+    
+    if (foundSpot) {
+      stateKeysList.splice(bestIdx, 0, mk)
+    } else {
+      unplacedKeys.push(mk)
+    }
+  }
+  
+  return { stateKeysList, unplacedKeys }
+}

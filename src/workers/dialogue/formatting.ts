@@ -3,16 +3,33 @@ export function formatDialogue(
   dialogue: string,
   prefix = '_',
   multitextDict: Record<string, string>,
+  isPhone = false,
 ): string {
   let line = ''
+  
+  // Remove internal game tags from speaker names
+  characterName = characterName.replace('{message} ', '')
+  characterName = characterName.replace('{message}', '')
+
   if (prefix === 'dicon') {
-    line = `{{DIcon}} ${dialogue}`
+    const dicon = isPhone ? '{Choice}' : '{{DIcon}}'
+    line = `${dicon} ${dialogue}`
   } else if (prefix === 'center') {
     line = `'''${dialogue}'''`
     line = line.replace(/\{PlayerName\}/g, "{{Rover}}")
   } else {
-    line = `'''${characterName}:''' ${dialogue}`
-    line = line.replace(/\{PlayerName\}/g, '{{Rover}}')
+    if (isPhone) {
+      const speaker = characterName.replace(/\{PlayerName\}/g, '(Rover)')
+      const replacedDialogue = dialogue.replace(/\{PlayerName\}/g, '{{Rover}}')
+      if (!speaker) {
+        line = `:${replacedDialogue}`
+      } else {
+        line = `'''${speaker}:''' ${replacedDialogue}`
+      }
+    } else {
+      line = `'''${characterName}:''' ${dialogue}`
+      line = line.replace(/\{PlayerName\}/g, '{{Rover}}')
+    }
   }
 
   line = line.replace(/<b>(.*?)<\/b>/g, "'''$1'''")
