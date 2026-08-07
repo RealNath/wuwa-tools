@@ -19,7 +19,8 @@
 
 a,
 .title,
-.notice {
+.notice,
+.blue-text-theme {
   text-decoration: none;
   color: #a2bfee;
   margin: 0;

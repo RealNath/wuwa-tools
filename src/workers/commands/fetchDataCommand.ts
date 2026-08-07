@@ -10,6 +10,27 @@ export async function handleFetchData(eventData: any) {
       status: 'success',
       data: limit ? items.slice(0, limit) : items,
     })
+  } else if (dataType === 'questdata') {
+    const data = await fetchData(dataType, lang)
+    const mt = await fetchMultiTextDict(lang || 'en')
+
+    // filter out a bunch of blank quest names
+    const items = data.reduce((acc: any[], item: any) => {
+      const tidName = item.Data?.TidName
+      const questName = mt[tidName]
+
+      if (questName && questName.trim() !== '') {
+        acc.push({
+          QuestId: item.QuestId,
+          QuestName: questName,
+        })
+      }
+      return acc
+    }, [])
+    self.postMessage({
+      status: 'success',
+      data: limit ? items.slice(0, limit) : items,
+    })
   } else {
     const data = await fetchData(dataType, lang)
     // convert to array if it's an object so the view doesn't crash

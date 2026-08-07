@@ -1,4 +1,4 @@
-import { fetchMultiTextDict, getChunkId, getChunkData } from '@/workers/dataFetcher'
+import { fetchMultiTextDict, getMultiTextContent } from '@/workers/dataFetcher'
 
 export async function handleGetOtherLanguage(eventData: any) {
   const { input, lang } = eventData
@@ -32,9 +32,7 @@ export async function handleGetOtherLanguage(eventData: any) {
 export async function handleGetOtherLanguageById(eventData: any) {
   const { id } = eventData
 
-  const chunkId = getChunkId(64, id)
-  const fetchedChunk = await getChunkData('multitext', chunkId)
-  const itemData = fetchedChunk[id] || {}
+  const itemData = await getMultiTextContent(id, 'all')
 
   const dict = {
     en: itemData['en'] || '',

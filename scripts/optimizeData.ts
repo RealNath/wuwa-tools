@@ -187,14 +187,14 @@ async function optimizeQuestData(version: string, outDir: string) {
   // convert list of dict to dict (key: QuestId, value: value of Data key)
   try {
     const data = await fetchJson(url)
-    const optimized = data.reduce((acc: any, currentItem: any) => {
-      const { QuestId, Data } = currentItem
-      acc[QuestId] = Data
-      return acc
-    }, {})
+    // const optimized = data.reduce((acc: any, currentItem: any) => {
+    //   const { QuestId, Data } = currentItem
+    //   acc[QuestId] = Data
+    //   return acc
+    // }, {})
 
     const outFile = path.join(outDir, 'questdata.json')
-    fs.writeFileSync(outFile, JSON.stringify(optimized))
+    fs.writeFileSync(outFile, JSON.stringify(data))
     console.log(`Saved ${outFile}`)
   } catch (e) {
     console.warn('Failed to process QuestData: ', e)

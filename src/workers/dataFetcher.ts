@@ -1,6 +1,7 @@
 import { get, set } from 'idb-keyval'
 
 let currentDataVersion: string | null = null
+type lang = 'de' | 'en' | 'es' | 'fr' | 'ja' | 'ko' | 'pt' | 'th' | 'zh-Hans' | 'zh-Hant'
 
 export async function getDataVersion(): Promise<string> {
   if (currentDataVersion) return currentDataVersion
@@ -27,7 +28,7 @@ export async function getDataVersion(): Promise<string> {
 
 export async function fetchData(
   type: 'multitext' | 'plothandbook' | 'questdata' | 'questnodedata',
-  lang?: string,
+  lang?: lang,
 ) {
   const version = await getDataVersion()
   const isLocal = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1'
@@ -62,13 +63,13 @@ export async function fetchData(
     console.warn(`Could not read from IndexedDB for ${cacheKey}`, e)
   }
 
-  const response = await fetch(`${url}?v=${Date.now()}`) // bypass HTTP cache since we use IDB
+  const response = await fetch(`${url}?v=${Date.now()}`)
   if (!response.ok) {
     throw new Error(`Failed to load ${url}`)
   }
 
   const data = await response.json()
-  
+
   // save to persistent storage
   try {
     await set(cacheKey, data)
@@ -82,7 +83,7 @@ export async function fetchData(
 // in-memory cache for the MultiText dictionary so it's only parsed once per session
 export const memoryCache: Record<string, Record<string, string>> = {}
 
-export async function fetchMultiTextDict(lang: string): Promise<Record<string, string>> {
+export async function fetchMultiTextDict(lang: lang): Promise<Record<string, string>> {
   if (memoryCache[lang]) {
     return memoryCache[lang]
   }
@@ -150,7 +151,9 @@ export async function getChunkData(type: 'multitext' | 'flowstate', chunkId: str
   }
 }
 
-export async function fetchFlowstateData(flowListNames: Iterable<string>): Promise<Record<string, any>> {
+export async function fetchFlowstateData(
+  flowListNames: Iterable<string>,
+): Promise<Record<string, any>> {
   const flowstateData: Record<string, any> = {}
   for (const flowListName of flowListNames) {
     const chunkId = getChunkId(64, flowListName)
@@ -158,4 +161,10 @@ export async function fetchFlowstateData(flowListNames: Iterable<string>): Promi
     Object.assign(flowstateData, fetchedChunk)
   }
   return flowstateData
+}
+
+export async function getMultiTextContent(id: string, lang: lang | 'all' = 'en') {
+  const chunkId = getChunkId(64, id)
+  const fetchedChunk = await getChunkData('multitext', chunkId)
+  return lang === 'all' ? fetchedChunk[id] || {} : fetchedChunk[id]?.[lang] || ''
 }
