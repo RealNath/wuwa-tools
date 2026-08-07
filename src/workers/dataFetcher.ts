@@ -1,33 +1,82 @@
 import { get, set } from 'idb-keyval'
 
+let currentDataVersion: string | null = null
+
+export async function getDataVersion(): Promise<string> {
+  if (currentDataVersion) return currentDataVersion
+
+  const isLocal = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1'
+  const baseUrl = !isLocal
+    ? 'https://raw.githubusercontent.com/realnath/wuwa-tools/refs/heads/data'
+    : '/data'
+
+  try {
+    const response = await fetch(`${baseUrl}/version.json?v=${Date.now()}`)
+    if (response.ok) {
+      const data = await response.json()
+      currentDataVersion = data.version
+      return currentDataVersion!
+    }
+  } catch (e) {
+    console.warn('Could not fetch version.json', e)
+  }
+
+  currentDataVersion = 'unknown'
+  return currentDataVersion
+}
+
 export async function fetchData(
-  type: 'multitext' | 'plothandbook' | 'questnodedata',
+  type: 'multitext' | 'plothandbook' | 'questdata' | 'questnodedata',
   lang?: string,
-  version: string = Date.now().toString(),
 ) {
+  const version = await getDataVersion()
   const isLocal = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1'
   const baseUrl = !isLocal
     ? 'https://raw.githubusercontent.com/realnath/wuwa-tools/refs/heads/data'
     : '/data'
 
   let url = ''
+  let cacheKey = `${type}-${version}`
 
   if (type === 'multitext') {
     url = `${baseUrl}/multitext/multitext_${lang || 'en'}.json`
+    cacheKey = `multitext-${lang || 'en'}-${version}`
   } else if (type === 'plothandbook') {
     url = `${baseUrl}/plothandbook.json`
+  } else if (type === 'questdata') {
+    url = `${baseUrl}/questdata.json`
   } else if (type === 'questnodedata') {
     url = `${baseUrl}/questnodedata.json`
   } else {
     throw new Error(`Unsupported type: ${type}`)
   }
 
-  const response = await fetch(!isLocal ? url : `${url}?v=${version}`)
+  // find and load from persistent storage
+  try {
+    const cached = await get(cacheKey)
+    if (cached) {
+      console.log(`[Cache Hit] Loaded ${cacheKey} from Persistent Storage instantly!`)
+      return cached
+    }
+  } catch (e) {
+    console.warn(`Could not read from IndexedDB for ${cacheKey}`, e)
+  }
+
+  const response = await fetch(`${url}?v=${Date.now()}`) // bypass HTTP cache since we use IDB
   if (!response.ok) {
     throw new Error(`Failed to load ${url}`)
   }
 
-  return await response.json()
+  const data = await response.json()
+  
+  // save to persistent storage
+  try {
+    await set(cacheKey, data)
+  } catch (e) {
+    console.warn(`Could not save to IndexedDB for ${cacheKey}`, e)
+  }
+
+  return data
 }
 
 // in-memory cache for the MultiText dictionary so it's only parsed once per session
@@ -38,31 +87,9 @@ export async function fetchMultiTextDict(lang: string): Promise<Record<string, s
     return memoryCache[lang]
   }
 
-  const cacheKey = `multitext-${lang}`
-
-  // find and load from persistent storage
-  try {
-    const cachedDict = await get(cacheKey)
-    if (cachedDict) {
-      console.log(`[Cache Hit] Loaded ${cacheKey} from Persistent Storage instantly!`)
-      memoryCache[lang] = cachedDict
-      return cachedDict
-    }
-  } catch (e) {
-    console.warn(`Could not read from IndexedDB for ${lang}`, e)
-  }
-
   try {
     const dict = await fetchData('multitext', lang)
     memoryCache[lang] = dict
-
-    // save to persistent storage
-    try {
-      await set(cacheKey, dict)
-    } catch (e) {
-      console.warn(`Could not save to IndexedDB for ${lang}`, e)
-    }
-
     return dict
   } catch (e) {
     console.warn(`Could not load multitext for ${lang}`, e)
@@ -83,7 +110,8 @@ export function getChunkId(chunk_count: number, id: string): string {
 export const chunkCache: Record<string, any> = {}
 
 export async function getChunkData(type: 'multitext' | 'flowstate', chunkId: string) {
-  const cacheKey = `chunk-${type}-${chunkId}`
+  const version = await getDataVersion()
+  const cacheKey = `chunk-${type}-${chunkId}-${version}`
 
   if (chunkCache[cacheKey]) return chunkCache[cacheKey]
 
@@ -105,7 +133,7 @@ export async function getChunkData(type: 'multitext' | 'flowstate', chunkId: str
 
     const url = `${baseUrl}/${type}/${type}_chunks/chunk_${chunkId}.json`
 
-    const response = await fetch(!isLocal ? url : `${url}?v=${Date.now()}`)
+    const response = await fetch(`${url}?v=${Date.now()}`) // bypass HTTP cache since we use IDB
     if (!response.ok) throw new Error(`Failed to load chunk ${chunkId}`)
     const data = await response.json()
 

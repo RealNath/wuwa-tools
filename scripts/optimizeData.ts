@@ -181,6 +181,26 @@ async function optimizePlotHandbook(version: string, outDir: string) {
   }
 }
 
+async function optimizeQuestData(version: string, outDir: string) {
+  const url = `${RAW_URL}/${version}/BinData/QuestData/questdata.json`
+
+  // convert list of dict to dict (key: QuestId, value: value of Data key)
+  try {
+    const data = await fetchJson(url)
+    const optimized = data.reduce((acc: any, currentItem: any) => {
+      const { QuestId, Data } = currentItem
+      acc[QuestId] = Data
+      return acc
+    }, {})
+
+    const outFile = path.join(outDir, 'questdata.json')
+    fs.writeFileSync(outFile, JSON.stringify(optimized))
+    console.log(`Saved ${outFile}`)
+  } catch (e) {
+    console.warn('Failed to process QuestData: ', e)
+  }
+}
+
 async function optimizeQuestNodeData(version: string, outDir: string) {
   const url = `${RAW_URL}/${version}/BinData/QuestNodeData/questnodedata.json`
 
@@ -208,14 +228,24 @@ async function main() {
   const version = versionData.default_branch
   console.log(`Latest version: ${version}`)
 
+  console.log('Fetching latest commit hash...')
+  const commitRes = await fetch(
+    `https://api.github.com/repos/Arikatsu/WutheringWaves_Data/commits/${version}`,
+  )
+  const commitData: any = await commitRes.json()
+  const dataVersion = commitData.sha || Date.now().toString()
+  console.log(`Latest commit hash: ${dataVersion}`)
+
   const outDir = path.join(process.cwd(), 'public', 'data')
   await ensureDir(outDir)
   fs.writeFileSync(path.join(outDir, '.gitignore'), '!*\n')
+  fs.writeFileSync(path.join(outDir, 'version.json'), JSON.stringify({ version: dataVersion }))
 
   await Promise.all([
     optimizePlotHandbook(version, outDir),
     optimizeFlowState(version, outDir),
     optimizeMultiText(version, outDir),
+    optimizeQuestData(version, outDir),
     optimizeQuestNodeData(version, outDir),
   ])
 
