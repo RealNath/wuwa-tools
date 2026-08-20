@@ -140,7 +140,9 @@ export function getTalkFlowLines(
           }
         }
       }
-      return bSeqIdx + 1
+      // Don't just return next sequence as a convergence point,
+      // as it breaks nested linear fallthroughs.
+      return null
     }
 
     function traverse(seqIdx: number, indentLevel: number, stopSeqs: Set<number>) {
@@ -212,6 +214,10 @@ export function getTalkFlowLines(
               branchSeqIdx: branchTargets[i],
             }))
             break
+          } else if (options.length === 1 && (seqIdx + 1) < talkSequence.length) {
+            hasBranchingOptions = true
+            optionsToBranch = [{ opt: options[0], branchSeqIdx: seqIdx + 1 }]
+            break
           } else {
             for (const opt of options) {
               const optTid = opt.TidTalkOption
@@ -266,7 +272,28 @@ export function getTalkFlowLines(
             }
           }
         } else {
-          traverse(seqIdx + 1, indentLevel, stopSeqs)
+          const lastId = seq.length > 0 ? seq[seq.length - 1] : undefined
+          const lastItem = lastId !== undefined ? talkItems[lastId] : undefined
+          let jumped = false
+          if (lastItem) {
+            for (const action of lastItem.Actions || []) {
+              if (action.Name === 'JumpTalk') {
+                const tId = action.Params?.TalkId
+                const targetSeq = tId !== undefined ? talkIdToSeqIdx[tId] : undefined
+                if (targetSeq !== undefined && targetSeq !== null) {
+                  traverse(targetSeq, indentLevel, stopSeqs)
+                  jumped = true
+                  break
+                }
+              } else if (action.Name === 'FinishTalk') {
+                jumped = true
+                break
+              }
+            }
+          }
+          if (!jumped) {
+            traverse(seqIdx + 1, indentLevel, stopSeqs)
+          }
         }
       }
     }
