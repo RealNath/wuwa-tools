@@ -94,7 +94,7 @@ onUnmounted(() => {
 
 <template>
   <div class="other-language">
-    <h1 class="text-3xl font-bold">Other Language</h1>
+    <h1 class="text-3xl font-bold">Other Languages</h1>
     <div class="flex items-center gap-2">
       <Input
         id="other-language-search"

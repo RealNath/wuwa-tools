@@ -15,8 +15,8 @@ const router = createRouter({
       component: () => import('../views/MultiTextView.vue'),
     },
     {
-      path: '/other-language',
-      name: 'Other Language',
+      path: '/other-languages',
+      name: 'Other Languages',
       component: () => import('../views/OtherLanguageView.vue')
     },
     {

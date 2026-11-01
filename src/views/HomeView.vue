@@ -75,7 +75,7 @@ async function disableCache() {
       Tools:
     </div>
     <ul class="mt-2.5">
-      <li class="li-elemt"><RouterLink to="/other-language">Other Languages</RouterLink></li>
+      <li class="li-elemt"><RouterLink to="/other-languages">Other Languages</RouterLink></li>
       <li class="li-elemt"><RouterLink to="/dialogue-generator">Generate Dialogue</RouterLink></li>
       <li class="li-elemt"><RouterLink to="/multi-text">Multi Text</RouterLink></li>
       <li class="li-elemt">More to come!</li>

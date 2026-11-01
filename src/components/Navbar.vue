@@ -18,7 +18,7 @@ function toggleMenu() {
   </Button>
   <nav :class="{ 'is-open': isMenuOpen }">
     <RouterLink to="/">Home</RouterLink>
-    <RouterLink to="/other-language">Other Language</RouterLink>
+    <RouterLink to="/other-languages">Other Languages</RouterLink>
     <RouterLink to="/dialogue-generator">Generate Dialogue</RouterLink>
     <RouterLink to="/multi-text">MultiText</RouterLink>
     <RouterLink to="/about">About</RouterLink>
