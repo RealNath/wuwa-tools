@@ -21,19 +21,8 @@ import { Button } from '@/components/ui/button'
 import DataWorker from '../workers/dataWorker?worker'
 import type { TabsPaneContext } from 'element-plus'
 import QuestListTable from '@/components/QuestListTable.vue'
+import LanguageRadioGroup from '@/components/LanguageRadioGroup.vue'
 
-const languages = ref<string[]>([
-  'de',
-  'en',
-  'es',
-  'fr',
-  'ja',
-  'ko',
-  'pt',
-  'th',
-  'zh-Hans',
-  'zh-Hant',
-])
 const langPosition = ref<string>('en')
 
 const searchQuery = ref<string>('')
@@ -125,12 +114,7 @@ onUnmounted(() => {
 
               <DropdownMenuGroup>
                 <DropdownMenuLabel>Dialogue Language</DropdownMenuLabel>
-
-                <DropdownMenuRadioGroup v-model="langPosition">
-                  <DropdownMenuRadioItem v-for="lang in languages" :key="lang" :value="lang">
-                    {{ lang }}
-                  </DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
+                <LanguageRadioGroup v-model="langPosition" />
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>

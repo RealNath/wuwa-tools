@@ -18,27 +18,15 @@ import {
 } from '@/components/ui/dropdown-menu'
 import DataWorker from '@/workers/dataWorker?worker'
 import { Button } from '@/components/ui/button'
+import LanguageRadioGroup from '@/components/LanguageRadioGroup.vue'
 
 type MultiTextItem = {
   Id: string
   Content: string
 }
 
-const languages = ref<string[]>([
-  'de',
-  'en',
-  'es',
-  'fr',
-  'ja',
-  'ko',
-  'pt',
-  'th',
-  'zh-Hans',
-  'zh-Hant',
-])
-
 const searchQuery = ref<string>('')
-const position = ref<string>('en')
+const langPosition = ref<string>('en')
 
 const allItems = shallowRef<MultiTextItem[]>([])
 const sortedItems = shallowRef<MultiTextItem[]>([])
@@ -128,11 +116,11 @@ onMounted(() => {
     command: 'fetch_data',
     dataType: 'multitext',
     version: 'latest',
-    lang: position.value,
+    lang: langPosition.value,
   })
 })
 
-watch(position, (newLang) => {
+watch(langPosition, (newLang) => {
   isLoading.value = true
   worker?.postMessage({
     command: 'fetch_data',
@@ -161,18 +149,13 @@ onUnmounted(() => {
       </Input>
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
-          <Button variant="outline" class="px-4">{{ position }}</Button>
+          <Button variant="outline" class="px-4">{{ langPosition }}</Button>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent>
           <DropdownMenuGroup>
             <DropdownMenuLabel>Select a Language</DropdownMenuLabel>
-
-            <DropdownMenuRadioGroup v-model="position">
-              <DropdownMenuRadioItem v-for="lang in languages" :key="lang" :value="lang">
-                {{ lang }}
-              </DropdownMenuRadioItem>
-            </DropdownMenuRadioGroup>
+            <LanguageRadioGroup v-model="langPosition" />
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>

@@ -18,22 +18,10 @@ import {
 } from '@/components/ui/dropdown-menu'
 import DataWorker from '../workers/dataWorker?worker'
 import { Button } from '@/components/ui/button'
-
-const languages = ref<string[]>([
-  'de',
-  'en',
-  'es',
-  'fr',
-  'ja',
-  'ko',
-  'pt',
-  'th',
-  'zh-Hans',
-  'zh-Hant',
-])
+import LanguageRadioGroup from '@/components/LanguageRadioGroup.vue'
 
 const searchQuery = ref<string>('')
-const position = ref<string>('en')
+const langPosition = ref<string>('en')
 
 const items = ref<any[]>([])
 const errorMessage = ref<string>('')
@@ -47,7 +35,7 @@ function handleSearch() {
   worker?.postMessage({
     command: 'get_other_language',
     input: searchQuery.value,
-    lang: position.value,
+    lang: langPosition.value,
     version: 'latest',
   })
 }
@@ -106,25 +94,16 @@ onUnmounted(() => {
       >
       </Input>
       <DropdownMenu>
-
         <DropdownMenuTrigger as-child>
-          <Button variant="outline" class="px-4">{{ position }}</Button>
+          <Button variant="outline" class="px-4">{{ langPosition }}</Button>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent>
-
           <DropdownMenuGroup>
             <DropdownMenuLabel>Search from</DropdownMenuLabel>
-
-            <DropdownMenuRadioGroup v-model="position">
-              <DropdownMenuRadioItem v-for="lang in languages" :key="lang" :value="lang">
-                {{ lang }}
-              </DropdownMenuRadioItem>
-            </DropdownMenuRadioGroup>
+            <LanguageRadioGroup v-model="langPosition" />
           </DropdownMenuGroup>
-
         </DropdownMenuContent>
-
       </DropdownMenu>
     </div>
 
