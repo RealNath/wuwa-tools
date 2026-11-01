@@ -22,6 +22,20 @@ import DataWorker from '../workers/dataWorker?worker'
 import type { TabsPaneContext } from 'element-plus'
 import QuestListTable from '@/components/QuestListTable.vue'
 
+const languages = ref<string[]>([
+  'de',
+  'en',
+  'es',
+  'fr',
+  'ja',
+  'ko',
+  'pt',
+  'th',
+  'zh-Hans',
+  'zh-Hant',
+])
+const langPosition = ref<string>('en')
+
 const searchQuery = ref<string>('')
 const showStateKeys = ref<boolean>(false)
 const showMissingDialogue = ref<boolean>(true)
@@ -45,7 +59,7 @@ function handleSearch() {
     command: 'extract_dialogue',
     questId: Number(searchQuery.value),
     version: 'latest',
-    lang: 'en',
+    lang: langPosition.value,
     options: {
       showStateKeys: showStateKeys.value,
       showMissingDialogue: showMissingDialogue.value,
@@ -105,6 +119,18 @@ onUnmounted(() => {
                 <DropdownMenuCheckboxItem v-model="showMissingDialogue" @select.prevent>
                   Show Missing Dialogue
                 </DropdownMenuCheckboxItem>
+              </DropdownMenuGroup>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Dialogue Language</DropdownMenuLabel>
+
+                <DropdownMenuRadioGroup v-model="langPosition">
+                  <DropdownMenuRadioItem v-for="lang in languages" :key="lang" :value="lang">
+                    {{ lang }}
+                  </DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
