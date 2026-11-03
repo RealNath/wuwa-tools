@@ -221,6 +221,37 @@ async function optimizeQuestNodeData(version: string, outDir: string) {
   }
 }
 
+// convert list of dict to dict (key: Id, value: relevant k-v pairs)
+// Omitted if fileName = `vo_<Id>` and CheckGender = false
+async function optimizePlotAudio(version: string, outDir: string) {
+  const url = `${RAW_URL}/${version}/BinData/plot_audio/plotaudio.json`
+  try {
+    const data = await fetchJson(url)
+    const optimized = data.reduce((acc: any, currentItem: any) => {
+      const { Id, FileName, CheckGenderEn, CheckGenderJa, CheckGenderKo, CheckGenderZh } =
+        currentItem
+
+      const entry: any = {}
+      if (FileName !== `vo_${Id}`) entry.FileName = FileName
+      if (CheckGenderEn) entry.CheckGenderEn = true
+      if (CheckGenderJa) entry.CheckGenderJa = true
+      if (CheckGenderKo) entry.CheckGenderKo = true
+      if (CheckGenderZh) entry.CheckGenderZh = true
+
+      acc[Id] = entry
+      return acc
+    }, {})
+
+    const plotaudioDir = path.join(outDir, 'plotaudio')
+    await ensureDir(plotaudioDir)
+    const outFile = path.join(plotaudioDir, 'plotaudio.json')
+    fs.writeFileSync(outFile, JSON.stringify(optimized))
+    console.log(`Saved ${outFile} (Keys: ${Object.keys(optimized).length})`)
+  } catch (e) {
+    console.warn('Failed to process plot_audio: ', e)
+  }
+}
+
 async function main() {
   console.log('Fetching latest version...')
   const versionRes = await fetch(REPO_URL)
@@ -247,6 +278,7 @@ async function main() {
     optimizeMultiText(version, outDir),
     optimizeQuestData(version, outDir),
     optimizeQuestNodeData(version, outDir),
+    optimizePlotAudio(version, outDir),
   ])
 
   console.log('All data optimized successfully!')
