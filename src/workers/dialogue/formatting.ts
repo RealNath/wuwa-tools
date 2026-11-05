@@ -1,4 +1,5 @@
 export function formatDialogue(
+  audio = '',
   characterName: string,
   dialogue: string,
   prefix = '_',
@@ -6,7 +7,7 @@ export function formatDialogue(
   isPhone = false,
 ): string {
   let line = ''
-  
+
   // Remove internal game tags from speaker names
   characterName = characterName.replace('{message} ', '')
   characterName = characterName.replace('{message}', '')
@@ -16,7 +17,7 @@ export function formatDialogue(
     line = `${dicon} ${dialogue}`
   } else if (prefix === 'center') {
     line = `'''${dialogue}'''`
-    line = line.replace(/\{PlayerName\}/g, "{{Rover}}")
+    line = line.replace(/\{PlayerName\}/g, '{{Rover}}')
   } else {
     if (isPhone) {
       const speaker = characterName.replace(/\{PlayerName\}/g, '(Rover)')
@@ -42,5 +43,5 @@ export function formatDialogue(
     return `{{Extra Effect|${text}|${title}|${desc}}}`
   })
 
-  return line
+  return `${audio}${line}`
 }

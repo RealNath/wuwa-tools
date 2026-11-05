@@ -5,7 +5,8 @@ export function printDialogues(
   stateKeyTips: Record<string, string>,
   flowstateData: Record<string, any>,
   multitextDict: Record<string, string>,
-  options: { showStateKeys: boolean, showMissingDialogue: boolean }
+  plotAudioDict: Record<string, any>,
+  options: { showStateKeys: boolean, showMissingDialogue: boolean, audioLang?: string },
 ): string[] {
   let firstPrint = true
   let lastPrintedTip = ''
@@ -15,7 +16,12 @@ export function printDialogues(
     const actionString = flowstateData[stateKey]?.Actions
     if (actionString) {
       const parsedActions = JSON.parse(actionString)
-      const lines = getTalkFlowLines(parsedActions, multitextDict)
+      const lines = getTalkFlowLines(
+        parsedActions,
+        multitextDict,
+        plotAudioDict,
+        options.audioLang,
+      )
 
       if (lines && lines.length > 0) {
         if (!firstPrint) {

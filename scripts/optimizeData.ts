@@ -241,10 +241,8 @@ async function optimizePlotAudio(version: string, outDir: string) {
       acc[Id] = entry
       return acc
     }, {})
-
-    const plotaudioDir = path.join(outDir, 'plotaudio')
-    await ensureDir(plotaudioDir)
-    const outFile = path.join(plotaudioDir, 'plotaudio.json')
+    
+    const outFile = path.join(outDir, 'plotaudio.json')
     fs.writeFileSync(outFile, JSON.stringify(optimized))
     console.log(`Saved ${outFile} (Keys: ${Object.keys(optimized).length})`)
   } catch (e) {

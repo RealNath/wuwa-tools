@@ -17,8 +17,11 @@ export async function handleExtractDialogue(eventData: any) {
   // fetch the chunk files for each flowListName
   const flowstateData = await fetchFlowstateData(flowListNames)
 
-  // fetch Multitext Dict
-  const multitextDict = await fetchMultiTextDict(lang || 'en')
+  // fetch Multitext Dict and Plot Audio
+  const [multitextDict, plotAudioDict] = await Promise.all([
+    fetchMultiTextDict(lang || 'en'),
+    fetchData('plotaudio'),
+  ])
 
   const options = eventData.options
 
@@ -50,6 +53,7 @@ export async function handleExtractDialogue(eventData: any) {
     stateKeyTips,
     flowstateData,
     multitextDict,
+    plotAudioDict,
     options,
   )
 
@@ -58,16 +62,29 @@ export async function handleExtractDialogue(eventData: any) {
     finalOutput.push('')
     finalOutput.push({
       type: 'missing-dialogue',
-      content: '====================================================================================================',
+      content:
+        '====================================================================================================',
     })
-    finalOutput.push({ type: 'missing-dialogue', content: 'MISSING FROM EXTRACTED DATA (Potentially different QuestId or unrelated to the quest)' })
     finalOutput.push({
       type: 'missing-dialogue',
-      content: '====================================================================================================',
+      content:
+        'MISSING FROM EXTRACTED DATA (Potentially different QuestId or unrelated to the quest)',
+    })
+    finalOutput.push({
+      type: 'missing-dialogue',
+      content:
+        '====================================================================================================',
     })
     finalOutput.push('')
 
-    const missingOutput = printDialogues(unplacedKeys, {}, flowstateData, multitextDict, options)
+    const missingOutput = printDialogues(
+      unplacedKeys,
+      {},
+      flowstateData,
+      multitextDict,
+      plotAudioDict,
+      options,
+    )
     finalOutput = finalOutput.concat(missingOutput)
   }
 

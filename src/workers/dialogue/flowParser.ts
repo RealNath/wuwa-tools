@@ -1,8 +1,46 @@
 import { formatDialogue } from './formatting'
 
+type PlotAudioEntry = {
+  FileName?: string
+  CheckGenderEn?: boolean
+  CheckGenderJa?: boolean
+  CheckGenderKo?: boolean
+  CheckGenderZh?: boolean
+}
+
+function getAudio(
+  tidTalk: string,
+  plotAudioDict: Record<string, PlotAudioEntry>,
+  language: string,
+): string {
+  const audioData: PlotAudioEntry | undefined = plotAudioDict[tidTalk]
+  if (!audioData) return ''
+
+  const fileName: string = audioData.FileName || `vo ${tidTalk}`
+  let checkGender: boolean = false
+  if (language === 'en') {
+    checkGender = audioData.CheckGenderEn || false
+  } else if (language === 'ja') {
+    checkGender = audioData.CheckGenderJa || false
+  } else if (language === 'ko') {
+    checkGender = audioData.CheckGenderKo || false
+  } else if (language === 'zh') {
+    checkGender = audioData.CheckGenderZh || false
+  }
+
+  const audioFileName = fileName.replace(/_/g, ' ').toLowerCase()
+  if (checkGender) {
+    return `{{A|${audioFileName} m.ogg}} {{A|${audioFileName} f.ogg}} `
+  }
+
+  return `{{A|${audioFileName}.ogg}} `
+}
+
 export function getTalkFlowLines(
   parsedData: any[],
   multitextDict: Record<string, string>,
+  plotAudioDict: Record<string, PlotAudioEntry> = {},
+  audioLang = 'en',
 ): string[] {
   const showTalks = parsedData.filter((item: any) => item.Name === 'ShowTalk')
   if (showTalks.length === 0) return []
@@ -10,7 +48,7 @@ export function getTalkFlowLines(
   const outputLines: string[] = []
 
   const phoneMode = parsedData.some(
-    (action: any) => action.Name === 'SetPlotMode' && action.Params?.Mode === 'PhoneMessage'
+    (action: any) => action.Name === 'SetPlotMode' && action.Params?.Mode === 'PhoneMessage',
   )
 
   for (const showTalk of showTalks) {
@@ -171,9 +209,17 @@ export function getTalkFlowLines(
               ? multitextDict[`Speaker_${whoId}_Name`] || whoId?.toString()
               : ''
           const dialogue = multitextDict[tidTalk] || tidTalk
+          const audio = getAudio(tidTalk, plotAudioDict, audioLang)
 
           const prefix = itemType === 'CenterText' ? 'center' : '_'
-          const formattedDialogue = formatDialogue(characterName, dialogue, prefix, multitextDict, isPhone)
+          const formattedDialogue = formatDialogue(
+            audio,
+            characterName,
+            dialogue,
+            prefix,
+            multitextDict,
+            isPhone,
+          )
           talkOutput.push(`${indent}${formattedDialogue}`)
         }
 
@@ -214,7 +260,7 @@ export function getTalkFlowLines(
               branchSeqIdx: branchTargets[i],
             }))
             break
-          } else if (options.length === 1 && (seqIdx + 1) < talkSequence.length) {
+          } else if (options.length === 1 && seqIdx + 1 < talkSequence.length) {
             hasBranchingOptions = true
             optionsToBranch = [{ opt: options[0], branchSeqIdx: seqIdx + 1 }]
             break
@@ -223,7 +269,14 @@ export function getTalkFlowLines(
               const optTid = opt.TidTalkOption
               if (optTid) {
                 const translatedOpt = multitextDict[optTid] || optTid
-                const dialogueLine = formatDialogue('_', translatedOpt, 'dicon', multitextDict, isPhone)
+                const dialogueLine = formatDialogue(
+                  '',
+                  '',
+                  translatedOpt,
+                  'dicon',
+                  multitextDict,
+                  isPhone,
+                )
                 talkOutput.push(`${indent}${dialogueLine}`)
               }
             }
@@ -238,7 +291,14 @@ export function getTalkFlowLines(
           const optTid = opt.TidTalkOption
           if (optTid) {
             const translatedOpt = multitextDict[optTid] || optTid
-            const dialogueLine = formatDialogue('_', translatedOpt, 'dicon', multitextDict, isPhone)
+            const dialogueLine = formatDialogue(
+              '',
+              '',
+              translatedOpt,
+              'dicon',
+              multitextDict,
+              isPhone,
+            )
             talkOutput.push(`${indent}${dialogueLine}`)
           }
 

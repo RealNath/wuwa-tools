@@ -27,7 +27,7 @@ export async function getDataVersion(): Promise<string> {
 }
 
 export async function fetchData(
-  type: 'multitext' | 'plothandbook' | 'questdata' | 'questnodedata',
+  type: 'multitext' | 'plothandbook' | 'questdata' | 'questnodedata' | 'plotaudio',
   lang?: lang,
 ) {
   const version = await getDataVersion()
@@ -48,6 +48,8 @@ export async function fetchData(
     url = `${baseUrl}/questdata.json`
   } else if (type === 'questnodedata') {
     url = `${baseUrl}/questnodedata.json`
+  } else if (type === 'plotaudio') {
+    url = `${baseUrl}/plotaudio.json`
   } else {
     throw new Error(`Unsupported type: ${type}`)
   }

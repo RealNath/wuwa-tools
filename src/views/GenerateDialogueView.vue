@@ -23,6 +23,8 @@ import type { TabsPaneContext } from 'element-plus'
 import QuestListTable from '@/components/QuestListTable.vue'
 import LanguageRadioGroup from '@/components/LanguageRadioGroup.vue'
 
+const audioLangs = ['None', 'en', 'ja', 'ko', 'zh']
+const audioLangPosition = ref<string>('en')
 const langPosition = ref<string>('en')
 
 const searchQuery = ref<string>('')
@@ -52,6 +54,7 @@ function handleSearch() {
     options: {
       showStateKeys: showStateKeys.value,
       showMissingDialogue: showMissingDialogue.value,
+      audioLang: audioLangPosition.value,
     },
   })
 }
@@ -106,8 +109,23 @@ onUnmounted(() => {
                 </DropdownMenuCheckboxItem>
 
                 <DropdownMenuCheckboxItem v-model="showMissingDialogue" @select.prevent>
-                  Show Missing Dialogue
+                  Missing Dialogue
                 </DropdownMenuCheckboxItem>
+              </DropdownMenuGroup>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Audio Language</DropdownMenuLabel>
+                <DropdownMenuRadioGroup v-model="audioLangPosition">
+                  <DropdownMenuRadioItem
+                    v-for="audioLang in audioLangs"
+                    :key="audioLang"
+                    :value="audioLang"
+                  >
+                    {{ audioLang }}
+                  </DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
               </DropdownMenuGroup>
 
               <DropdownMenuSeparator />
