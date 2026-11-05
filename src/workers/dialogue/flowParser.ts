@@ -11,20 +11,20 @@ type PlotAudioEntry = {
 function getAudio(
   tidTalk: string,
   plotAudioDict: Record<string, PlotAudioEntry>,
-  language: string,
+  audioLang: string,
 ): string {
   const audioData: PlotAudioEntry | undefined = plotAudioDict[tidTalk]
-  if (!audioData) return ''
+  if (audioLang === 'None' || !audioData) return ''
 
   const fileName: string = audioData.FileName || `vo ${tidTalk}`
   let checkGender: boolean = false
-  if (language === 'en') {
+  if (audioLang === 'en') {
     checkGender = audioData.CheckGenderEn || false
-  } else if (language === 'ja') {
+  } else if (audioLang === 'ja') {
     checkGender = audioData.CheckGenderJa || false
-  } else if (language === 'ko') {
+  } else if (audioLang === 'ko') {
     checkGender = audioData.CheckGenderKo || false
-  } else if (language === 'zh') {
+  } else if (audioLang === 'zh') {
     checkGender = audioData.CheckGenderZh || false
   }
 
@@ -209,7 +209,10 @@ export function getTalkFlowLines(
               ? multitextDict[`Speaker_${whoId}_Name`] || whoId?.toString()
               : ''
           const dialogue = multitextDict[tidTalk] || tidTalk
-          const audio = getAudio(tidTalk, plotAudioDict, audioLang)
+          let audio = ''
+          if (audioLang !== 'None') {
+            audio = getAudio(tidTalk, plotAudioDict, audioLang)
+          }
 
           const prefix = itemType === 'CenterText' ? 'center' : '_'
           const formattedDialogue = formatDialogue(
