@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { Input } from '@/components/ui/input'
 import {
   DropdownMenu,
@@ -43,7 +43,8 @@ const handleClick = (tab: TabsPaneContext, event: Event) => {
 }
 
 function handleSearch() {
-  if (!searchQuery.value) return
+  if (!searchQuery.value || isLoading.value) return
+
   isLoading.value = true
   errorMessage.value = ''
   worker?.postMessage({
@@ -58,6 +59,11 @@ function handleSearch() {
     },
   })
 }
+
+// Trigger search (redo search) if an option changes
+watch([showStateKeys, showMissingDialogue, audioLangPosition, langPosition], () => {
+  handleSearch()
+})
 
 onMounted(() => {
   worker = new DataWorker()
@@ -99,7 +105,7 @@ onUnmounted(() => {
           </Input>
           <DropdownMenu>
             <DropdownMenuTrigger as-child>
-              <Button variant="outline" class="px-4">Options</Button>
+              <Button variant="outline" class="px-4" :disabled="isLoading">Options</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent class="w-full">
               <DropdownMenuGroup>
