@@ -71,7 +71,7 @@ export async function handleExtractDialogue(eventData: any) {
     finalOutput.push({
       type: 'missing-dialogue',
       content:
-        'MISSING FROM EXTRACTED DATA (Potentially different QuestId or unrelated to the quest)',
+        'MISSING FROM EXTRACTED DATA (not referenced by this quest, different QuestId, or unrelated to the quest)',
     })
     finalOutput.push({
       type: 'missing-dialogue',
