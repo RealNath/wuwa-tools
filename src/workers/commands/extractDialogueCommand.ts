@@ -4,11 +4,16 @@ import { printDialogues } from '@/workers/dialogue/dialoguePrinter'
 
 export async function handleExtractDialogue(eventData: any) {
   const { questId, lang } = eventData
+  const options = eventData.options
 
   // fetch PlotHandbook
   const plothbData = await fetchData('plothandbook')
 
-  const { stateKeys, stateKeyTips, flowListNames } = await getQuestStateKeys(questId, plothbData)
+  const { stateKeys, stateKeyTips, flowListNames } = await getQuestStateKeys(
+    questId,
+    plothbData,
+    options.showMissingDialogue,
+  )
 
   if (stateKeys.length === 0) {
     throw new Error(`No valid state keys found for QuestId ${questId}.`)
@@ -22,8 +27,6 @@ export async function handleExtractDialogue(eventData: any) {
     fetchMultiTextDict(lang || 'en'),
     fetchData('plotaudio'),
   ])
-
-  const options = eventData.options
 
   let finalKeys = stateKeys
   let unplacedKeys: string[] = []

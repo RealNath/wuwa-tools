@@ -1,7 +1,16 @@
 import { fetchData } from '@/workers/dataFetcher'
 import { getNodeSequence } from '@/workers/dialogue/flowParser'
+import { getMissingFlowLists } from '@/workers/dialogue/missingFlowLists'
 
-export async function getQuestStateKeys(questId: number, plothbData: any): Promise<{ stateKeys: string[], stateKeyTips: Record<string, string>, flowListNames: Set<string> }> {
+export async function getQuestStateKeys(
+  questId: number,
+  plothbData: any,
+  includeMissingFlowLists = false,
+): Promise<{
+  stateKeys: string[]
+  stateKeyTips: Record<string, string>
+  flowListNames: Set<string>
+}> {
   const parsedData = plothbData[questId]
   let stateKeys: string[] = []
   const flowListNames = new Set<string>()
@@ -28,7 +37,9 @@ export async function getQuestStateKeys(questId: number, plothbData: any): Promi
       stateKeyTips[stateKey] = currentTip
     }
   } else {
-    console.log(`QuestId ${questId} not found in plothandbookconfig.json. Falling back to questnodedata.json...`)
+    console.log(
+      `QuestId ${questId} not found in plothandbookconfig.json. Falling back to questnodedata.json...`,
+    )
     const questNodeData = await fetchData('questnodedata')
     const sequence = getNodeSequence(questId, questNodeData)
     stateKeys = sequence.stateKeys
@@ -43,43 +54,57 @@ export async function getQuestStateKeys(questId: number, plothbData: any): Promi
     }
   }
 
+  // Flow lists that belong to the quest's dungeons but are not referenced by any quest.
+  if (includeMissingFlowLists) {
+    try {
+      for (const flowListName of await getMissingFlowLists(questId, plothbData)) {
+        flowListNames.add(flowListName)
+      }
+    } catch (e) {
+      console.warn('Could not load missing flow lists', e)
+    }
+  }
+
   return { stateKeys, stateKeyTips, flowListNames }
 }
 
-export function interleaveMissingKeys(stateKeys: string[], missingStateKeys: string[]): { stateKeysList: string[], unplacedKeys: string[] } {
+export function interleaveMissingKeys(
+  stateKeys: string[],
+  missingStateKeys: string[],
+): { stateKeysList: string[]; unplacedKeys: string[] } {
   const stateKeysList = [...stateKeys]
   const unplacedKeys: string[] = []
-  
+
   for (const mk of missingStateKeys) {
     const parts = mk.split('_')
     if (parts.length < 3) {
       unplacedKeys.push(mk)
       continue
     }
-    
+
     const mStateId = parseInt(parts[parts.length - 1]!, 10)
     const mFlowId = parts[parts.length - 2]!
     const mFlowListName = parts.slice(0, -2).join('_')
-    
+
     if (isNaN(mStateId)) {
       unplacedKeys.push(mk)
       continue
     }
-    
+
     let bestIdx = stateKeysList.length
     let foundSpot = false
-    
+
     for (let i = 0; i < stateKeysList.length; i++) {
       const sk = stateKeysList[i]!
       const sParts = sk.split('_')
       if (sParts.length < 3) continue
-      
+
       const sStateId = parseInt(sParts[sParts.length - 1]!, 10)
       const sFlowId = sParts[sParts.length - 2]!
       const sFlowListName = sParts.slice(0, -2).join('_')
-      
+
       if (isNaN(sStateId)) continue
-      
+
       if (sFlowListName === mFlowListName && sFlowId === mFlowId) {
         foundSpot = true
         if (sStateId > mStateId) {
@@ -90,13 +115,13 @@ export function interleaveMissingKeys(stateKeys: string[], missingStateKeys: str
         }
       }
     }
-    
+
     if (foundSpot) {
       stateKeysList.splice(bestIdx, 0, mk)
     } else {
       unplacedKeys.push(mk)
     }
   }
-  
+
   return { stateKeysList, unplacedKeys }
 }

@@ -27,7 +27,14 @@ export async function getDataVersion(): Promise<string> {
 }
 
 export async function fetchData(
-  type: 'multitext' | 'plothandbook' | 'questdata' | 'questnodedata' | 'plotaudio',
+  type:
+    | 'multitext'
+    | 'plothandbook'
+    | 'questdata'
+    | 'questnodedata'
+    | 'plotaudio'
+    | 'flow'
+    | 'dungeonpackinfo',
   lang?: lang,
 ) {
   const version = await getDataVersion()
@@ -50,6 +57,10 @@ export async function fetchData(
     url = `${baseUrl}/questnodedata.json`
   } else if (type === 'plotaudio') {
     url = `${baseUrl}/plotaudio.json`
+  } else if (type === 'flow') {
+    url = `${baseUrl}/flow.json`
+  } else if (type === 'dungeonpackinfo') {
+    url = `${baseUrl}/dungeonpackinfo.json`
   } else {
     throw new Error(`Unsupported type: ${type}`)
   }

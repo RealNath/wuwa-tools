@@ -221,6 +221,45 @@ async function optimizeQuestNodeData(version: string, outDir: string) {
   }
 }
 
+// Convert Id to key: FlowListName, value: array of DungeonId values used by the FlowListName's FlowIds
+async function optimizeFlowData(version: string, outDir: string) {
+  const url = `${RAW_URL}/${version}/BinData/flow/flow.json`
+
+  try {
+    const data = await fetchJson(url)
+    const optimized = data.reduce((acc: any, currentItem: any) => {
+      const { Id, DungeonId } = currentItem
+      const flowListName = Id.replace(/(_[^_]+)$/, '')
+
+      if (!acc[flowListName]) acc[flowListName] = []
+      if (!acc[flowListName].includes(DungeonId)) acc[flowListName].push(DungeonId)
+      return acc
+    }, {})
+
+    const outFile = path.join(outDir, 'flow.json')
+    fs.writeFileSync(outFile, JSON.stringify(optimized))
+    console.log(`Saved ${outFile} (Keys: ${Object.keys(optimized).length})`)
+  } catch (e) {
+    console.warn('Failed to process flow: ', e)
+  }
+}
+
+// array of DungeonId values
+async function optimizeDungeonPackInfo(version: string, outDir: string) {
+  const url = `${RAW_URL}/${version}/BinData/DungeonPackInfo/dungeonpackinfo.json`
+
+  try {
+    const data = await fetchJson(url)
+    const optimized = data.map((currentItem: any) => currentItem.DungeonId)
+
+    const outFile = path.join(outDir, 'dungeonpackinfo.json')
+    fs.writeFileSync(outFile, JSON.stringify(optimized))
+    console.log(`Saved ${outFile} (Dungeons: ${optimized.length})`)
+  } catch (e) {
+    console.warn('Failed to process DungeonPackInfo: ', e)
+  }
+}
+
 // convert list of dict to dict (key: Id, value: relevant k-v pairs)
 // Omitted if fileName = `vo_<Id>` and CheckGender = false
 async function optimizePlotAudio(version: string, outDir: string) {
@@ -241,7 +280,7 @@ async function optimizePlotAudio(version: string, outDir: string) {
       acc[Id] = entry
       return acc
     }, {})
-    
+
     const outFile = path.join(outDir, 'plotaudio.json')
     fs.writeFileSync(outFile, JSON.stringify(optimized))
     console.log(`Saved ${outFile} (Keys: ${Object.keys(optimized).length})`)
@@ -276,6 +315,8 @@ async function main() {
     optimizeMultiText(version, outDir),
     optimizeQuestData(version, outDir),
     optimizeQuestNodeData(version, outDir),
+    optimizeFlowData(version, outDir),
+    optimizeDungeonPackInfo(version, outDir),
     optimizePlotAudio(version, outDir),
   ])
 
