@@ -203,27 +203,30 @@ export function getTalkFlowLines(
         const tidTalk = item.TidTalk
         const whoId = item.WhoId
         const itemType = item.Type
+        const isNoTextItem = itemType === 'NoTextItem' || itemType === 'VisualNovelNoTextItem'
         if (tidTalk) {
-          const characterName =
-            whoId !== undefined && whoId !== null
-              ? multitextDict[`Speaker_${whoId}_Name`] || whoId?.toString()
-              : ''
-          const dialogue = multitextDict[tidTalk] || tidTalk
-          let audio = ''
-          if (audioLang !== 'None') {
-            audio = getAudio(tidTalk, plotAudioDict, audioLang)
-          }
+          const dialogue = multitextDict[tidTalk] || ''
+          if (!isNoTextItem) {
+            const characterName =
+              whoId !== undefined && whoId !== null
+                ? multitextDict[`Speaker_${whoId}_Name`] || whoId?.toString()
+                : ''
+            let audio = ''
+            if (audioLang !== 'None') {
+              audio = getAudio(tidTalk, plotAudioDict, audioLang)
+            }
 
-          const prefix = itemType === 'CenterText' ? 'center' : '_'
-          const formattedDialogue = formatDialogue(
-            audio,
-            characterName,
-            dialogue,
-            prefix,
-            multitextDict,
-            isPhone,
-          )
-          talkOutput.push(`${indent}${formattedDialogue}`)
+            const prefix = itemType && String(itemType).endsWith('CenterText') ? 'center' : '_'
+            const formattedDialogue = formatDialogue(
+              audio,
+              characterName,
+              dialogue || tidTalk,
+              prefix,
+              multitextDict,
+              isPhone,
+            )
+            talkOutput.push(`${indent}${formattedDialogue}`)
+          }
         }
 
         if (item.Options && item.Options.length > 0) {
@@ -270,8 +273,8 @@ export function getTalkFlowLines(
           } else {
             for (const opt of options) {
               const optTid = opt.TidTalkOption
-              if (optTid) {
-                const translatedOpt = multitextDict[optTid] || optTid
+              const translatedOpt = optTid ? multitextDict[optTid] : ''
+              if (translatedOpt && translatedOpt.trim()) {
                 const dialogueLine = formatDialogue(
                   '',
                   '',
@@ -292,8 +295,8 @@ export function getTalkFlowLines(
 
         for (const { opt, branchSeqIdx } of optionsToBranch) {
           const optTid = opt.TidTalkOption
-          if (optTid) {
-            const translatedOpt = multitextDict[optTid] || optTid
+          const translatedOpt = optTid ? multitextDict[optTid] : ''
+          if (translatedOpt && translatedOpt.trim()) {
             const dialogueLine = formatDialogue(
               '',
               '',

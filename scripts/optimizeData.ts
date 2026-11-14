@@ -244,6 +244,29 @@ async function optimizeFlowData(version: string, outDir: string) {
   }
 }
 
+// { FlowListName: [[FlowId, StateId], ...] }
+async function optimizeSolarSchoolFlow(version: string, outDir: string) {
+  const url = `${RAW_URL}/${version}/BinData/SolarSchool/solarschoolflow.json`
+
+  try {
+    const data = await fetchJson(url)
+
+    const optimized = data.reduce((acc: any, currentItem: any) => {
+      const { FlowListName, FlowId, StateId } = currentItem
+
+      if (!acc[FlowListName]) acc[FlowListName] = []
+      acc[FlowListName].push([FlowId, StateId])
+      return acc
+    }, {})
+
+    const outFile = path.join(outDir, 'solarschoolflow.json')
+    fs.writeFileSync(outFile, JSON.stringify(optimized))
+    console.log(`Saved ${outFile} (Lists: ${Object.keys(optimized).length})`)
+  } catch (e) {
+    console.warn('Failed to process SolarSchool flow: ', e)
+  }
+}
+
 // array of DungeonId values
 async function optimizeDungeonPackInfo(version: string, outDir: string) {
   const url = `${RAW_URL}/${version}/BinData/DungeonPackInfo/dungeonpackinfo.json`
@@ -317,6 +340,7 @@ async function main() {
     optimizeQuestNodeData(version, outDir),
     optimizeFlowData(version, outDir),
     optimizeDungeonPackInfo(version, outDir),
+    optimizeSolarSchoolFlow(version, outDir),
     optimizePlotAudio(version, outDir),
   ])
 

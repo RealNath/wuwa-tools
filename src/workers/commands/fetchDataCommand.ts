@@ -31,6 +31,13 @@ export async function handleFetchData(eventData: any) {
       status: 'success',
       data: limit ? items.slice(0, limit) : items,
     })
+  } else if (dataType === 'solarschoolflow') {
+    const data = await fetchData(dataType)
+    self.postMessage({
+      status: 'success',
+      kind: 'lists',
+      data,
+    })
   } else {
     const data = await fetchData(dataType, lang)
     // convert to array if it's an object so the view doesn't crash

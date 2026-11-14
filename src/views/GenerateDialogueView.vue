@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button'
 import DataWorker from '../workers/dataWorker?worker'
 import type { TabsPaneContext } from 'element-plus'
 import QuestListTable from '@/components/QuestListTable.vue'
+import SolarSchoolDialogue from '@/components/SolarSchoolDialogue.vue'
 import LanguageRadioGroup from '@/components/LanguageRadioGroup.vue'
 
 const audioLangs = ['None', 'en', 'ja', 'ko', 'zh']
@@ -153,21 +154,27 @@ onUnmounted(() => {
           Manual adjustments needed later.
         </div>
         <template v-else>
-          <div
-            v-for="(item, index) in items"
-            :key="index"
-            :class="[
-              'min-h-6 whitespace-pre-wrap',
-              item?.type === 'missing-dialogue' ? 'notice font-bold' : '',
-            ]"
-          >
-            {{ item?.type ? item.content : item }}
+          <div class="input-group max-h-150 overflow-y-auto rounded-md border px-2 py-1">
+            <div
+              v-for="(item, index) in items"
+              :key="index"
+              :class="[
+                'min-h-6 whitespace-pre-wrap',
+                item?.type === 'missing-dialogue' ? 'notice font-bold' : '',
+              ]"
+            >
+              {{ item?.type ? item.content : item }}
+            </div>
           </div>
         </template>
       </el-tab-pane>
 
       <el-tab-pane label="Quest ID List" name="second">
         <QuestListTable />
+      </el-tab-pane>
+
+      <el-tab-pane label="SCoS: Unwritten Dreams" name="third">
+        <SolarSchoolDialogue />
       </el-tab-pane>
     </el-tabs>
   </div>

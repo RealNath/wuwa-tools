@@ -34,7 +34,8 @@ export async function fetchData(
     | 'questnodedata'
     | 'plotaudio'
     | 'flow'
-    | 'dungeonpackinfo',
+    | 'dungeonpackinfo'
+    | 'solarschoolflow',
   lang?: lang,
 ) {
   const version = await getDataVersion()
@@ -61,6 +62,8 @@ export async function fetchData(
     url = `${baseUrl}/flow.json`
   } else if (type === 'dungeonpackinfo') {
     url = `${baseUrl}/dungeonpackinfo.json`
+  } else if (type === 'solarschoolflow') {
+    url = `${baseUrl}/solarschoolflow.json`
   } else {
     throw new Error(`Unsupported type: ${type}`)
   }
