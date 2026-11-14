@@ -78,7 +78,7 @@ onMounted(() => {
         listCounts.value = Object.fromEntries(
           Object.entries(flowMap).map(([name, rows]) => [name, rows.length]),
         )
-        flowListNames.value = Object.keys(flowMap).sort()
+        flowListNames.value = Object.keys(flowMap)
       } else {
         errorMessage.value = result.message
       }
