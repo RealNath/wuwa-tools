@@ -29,7 +29,7 @@ export function printDialogues(
         }
 
         if (options.showStateKeys) {
-          finalOutput.push(`;StateKey: ${stateKey}`)
+          finalOutput.push(`<!--StateKey: ${stateKey}-->`)
         }
 
         const tipKey = stateKeyTips[stateKey] || ''
